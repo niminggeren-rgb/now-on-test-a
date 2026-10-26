@@ -206,3 +206,24 @@ export interface MockExamRecord {
   aiOverallAdvice?: string;
   analyzedWeaknesses?: string[];
 }
+
+export interface EliminationTraceEntry {
+  eliminated: boolean;
+  userTaggedTrap: ActiveTrapType | null;
+  slashedSegment: string | null;
+  actualTrap: TrapType;
+  isTrapMatch: boolean;
+}
+
+export interface AnswerLog {
+  id: string;
+  passageId: string;
+  questionId: string;
+  selectedChoiceLabel: number | null;
+  isCorrect: boolean;
+  /** キーは選択肢番号の文字列（"1"〜"4"）。DB の elimination_trace_json と同形式。 */
+  eliminationTrace: Record<string, EliminationTraceEntry>;
+  timeSpentMs: number;
+  confidenceLevel: 1 | 2 | 3 | null;
+  createdAt: string; // ISO 8601
+}
