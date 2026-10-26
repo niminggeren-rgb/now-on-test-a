@@ -121,10 +121,10 @@ const analysis: ExamAnalysisResult = {
   },
 };
 const synced = customMaterialRepository.syncExamAnalysisToCarte(analysis);
-assert.equal(synced.updatedWeaknesses.causal_inversion, 90);
-customMaterialRepository.syncExamAnalysisToCarte(analysis);
+assert.equal(synced.updatedWeaknesses.causal_inversion, 25, '1回の加算は上限25');
+for (let i = 0; i < 4; i++) customMaterialRepository.syncExamAnalysisToCarte(analysis);
 assert.equal(customMaterialRepository.getTrapWeaknesses().causal_inversion, 100, '100 で頭打ち');
-assert.equal(customMaterialRepository.getInstructorCarteRecords().length, 2);
+assert.equal(customMaterialRepository.getInstructorCarteRecords().length, 5);
 assert.equal(customMaterialRepository.rewardTrapOvercome('causal_inversion').causal_inversion, 92);
 assert.equal(customMaterialRepository.rewardTrapOvercome('none').causal_inversion, 92);
 assert.equal(customMaterialRepository.rewardTrapOvercome('substitution').substitution, 0, '0 未満にならない');
