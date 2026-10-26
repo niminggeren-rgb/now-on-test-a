@@ -1,0 +1,95 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  /* Dark (default): Deep Zinc */
+  :root {
+    --background: 240 10% 4%;        /* #09090B zinc-950 */
+    --surface: 240 6% 8%;            /* #121215 */
+    --border: 240 4% 16%;            /* #27272A zinc-800 */
+    --foreground: 240 5% 96%;        /* #F4F4F5 zinc-100 */
+    --muted: 240 5% 65%;             /* #A1A1AA zinc-400 */
+    --accent: 239 84% 67%;           /* #6366F1 indigo-500 */
+
+    --trap-overstatement: 347 91% 60%; /* rose-500 */
+    --trap-causal: 38 92% 50%;         /* amber-500 */
+    --trap-swap: 271 91% 65%;          /* purple-500 */
+    --trap-unmentioned: 215 16% 47%;   /* slate */
+    --trap-flip: 188 94% 43%;          /* cyan-500 */
+    --trap-partial: 330 81% 60%;       /* pink-500 */
+  }
+
+  /* Light: Warm Academic Paper */
+  :root.light {
+    --background: 48 33% 97%;        /* #FAF9F5 */
+    --surface: 0 0% 100%;
+    --border: 240 6% 90%;            /* zinc-200 */
+    --foreground: 240 6% 10%;        /* zinc-900 */
+    --muted: 240 4% 36%;             /* zinc-600 */
+    --accent: 243 75% 59%;           /* indigo-600 */
+
+    --trap-overstatement: 347 77% 50%;
+    --trap-causal: 32 95% 44%;
+    --trap-swap: 271 81% 56%;
+    --trap-unmentioned: 215 19% 35%;
+    --trap-flip: 192 91% 36%;
+    --trap-partial: 333 71% 51%;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  html {
+    color-scheme: dark;
+  }
+  html.light {
+    color-scheme: light;
+  }
+
+  body {
+    @apply bg-background font-sans text-foreground antialiased;
+  }
+
+  /* Custom scrollbar */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--border)) transparent;
+  }
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: hsl(var(--border));
+    border-radius: 9999px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--muted) / 0.6);
+  }
+
+  :focus-visible {
+    outline: 2px solid hsl(var(--accent));
+    outline-offset: 2px;
+  }
+}
+
+@layer utilities {
+  /* 縦書きレイアウト */
+  .writing-vertical {
+    writing-mode: vertical-rl;
+    text-orientation: upright;
+  }
+  /* 縦中横 */
+  .tcy {
+    text-combine-upright: all;
+  }
+  /* 評論文本文 */
+  .passage-text {
+    @apply font-serif leading-passage tracking-passage;
+  }
+}
