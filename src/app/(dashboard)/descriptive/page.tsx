@@ -1,5 +1,24 @@
-import { PhasePlaceholder } from '@/components/layout/phase-placeholder';
+import { DescriptiveWorkspace, type DescriptiveEntry } from '@/components/descriptive/descriptive-workspace';
+import { createRepository } from '@/lib/repository';
+import { createClient } from '@/lib/supabase/server';
 
-export default function Page() {
-  return <PhasePlaceholder title="400字記述演習" phase={3} summary="原稿用紙風エディタとGemini AIによる自動添削を提供します。" />;
+export default async function DescriptivePage() {
+  const repo = createRepository(await createClient(), null);
+  const passages = await repo.listPassages();
+
+  const entries: DescriptiveEntry[] = passages.flatMap((passage) =>
+    passage.questions
+      .filter((q) => q.questionType === 'DESCRIPTIVE_400' && (q.gradingRubric?.length ?? 0) > 0)
+      .map((q) => ({
+        passage: { id: passage.id, title: passage.title, author: passage.author, paragraphs: passage.paragraphs },
+        question: {
+          id: q.id,
+          promptText: q.promptText,
+          descriptiveCharLimit: q.descriptiveCharLimit,
+          gradingRubric: q.gradingRubric,
+        },
+      })),
+  );
+
+  return <DescriptiveWorkspace entries={entries} />;
 }

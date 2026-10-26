@@ -1,5 +1,11 @@
-import { PhasePlaceholder } from '@/components/layout/phase-placeholder';
+import { PracticeBrowser } from '@/components/practice/practice-browser';
+import { buildTrapIndex, summarizePassage } from '@/lib/passage-summary';
+import { createRepository } from '@/lib/repository';
+import { createClient } from '@/lib/supabase/server';
 
-export default function Page() {
-  return <PhasePlaceholder title="論理演習" phase={3} summary="評論文一覧、トラップ別重点演習フィルタ、論理消去法UIを提供します。" />;
+export default async function PracticeIndexPage() {
+  const repo = createRepository(await createClient(), null);
+  const passages = await repo.listPassages();
+
+  return <PracticeBrowser passages={passages.map(summarizePassage)} trapIndex={buildTrapIndex(passages)} />;
 }

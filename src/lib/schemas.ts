@@ -81,3 +81,15 @@ export const mockExamInputSchema = z
     path: ['modernJapaneseScore'],
   });
 export type MockExamInput = z.input<typeof mockExamInputSchema>;
+
+/** API の ActionResult<T> レスポンスを検証するためのスキーマ生成。 */
+export function actionResultSchemaOf<T extends z.ZodTypeAny>(data: T) {
+  return z.discriminatedUnion('success', [
+    z.object({ success: z.literal(true), data }),
+    z.object({
+      success: z.literal(false),
+      error: z.string(),
+      fieldErrors: z.record(z.string(), z.array(z.string())).optional(),
+    }),
+  ]);
+}
