@@ -10,7 +10,10 @@
     "typecheck": "tsc --noEmit",
     "validate:data": "tsx scripts/validate-mock-data.ts",
     "test:repo": "tsx scripts/test-repository.ts",
-    "test:grading": "tsx scripts/test-grading.ts"
+    "test:grading": "tsx scripts/test-grading.ts",
+    "test:analytics": "tsx scripts/test-analytics.ts",
+    "test:exam": "tsx scripts/test-exam-analysis.ts",
+    "test:instructor": "tsx scripts/test-instructor.ts"
   },
   "devDependencies": {
     "@types/node": "^22.20.5",

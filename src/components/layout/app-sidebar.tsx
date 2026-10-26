@@ -11,7 +11,7 @@ export function AppSidebar() {
   const active = findNavItem(pathname);
 
   return (
-    <aside className="hidden w-56 shrink-0 flex-col border-r bg-surface md:flex">
+    <aside className="hidden w-56 shrink-0 flex-col border-r bg-surface md:flex print:hidden">
       <div className="flex h-12 items-center gap-2 border-b px-4">
         <BookOpenText className="h-4 w-4 text-accent" aria-hidden />
         <span className="text-sm font-semibold tracking-tight">Logical Vernacular</span>

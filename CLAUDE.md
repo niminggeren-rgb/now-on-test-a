@@ -120,5 +120,8 @@ npm run build
 npm run validate:data   # モック評論文データの整合性検証
 npm run test:repo       # ハイブリッドリポジトリ・弱点スコア計算
 npm run test:grading    # 400字ローカル採点・Gemini出力の正規化・本文セグメント化
+npm run test:analytics  # KPI・トラップ別率・処方箋
+npm run test:exam       # 答案画像の署名検証・解析スキーマ・シミュレーション
+npm run test:instructor # 講師カルテの診断・指導サジェスト
 ```
 `next dev` を同一ディレクトリで複数同時に起動しないこと（`.next` が壊れてチャンクが 404 になる）。

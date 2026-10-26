@@ -12,6 +12,10 @@
     --muted: 240 5% 65%;             /* #A1A1AA zinc-400 */
     --accent: 239 84% 67%;           /* #6366F1 indigo-500 */
 
+    /* Chart series (validate_palette.js 検証済み: dark surface #121215 / light #fff) */
+    --series-1: #3987e5;             /* blue */
+    --series-2: #d95926;             /* orange */
+
     --trap-overstatement: 347 91% 60%; /* rose-500 */
     --trap-causal: 38 92% 50%;         /* amber-500 */
     --trap-swap: 271 91% 65%;          /* purple-500 */
@@ -28,6 +32,8 @@
     --foreground: 240 6% 10%;        /* zinc-900 */
     --muted: 240 4% 36%;             /* zinc-600 */
     --accent: 243 75% 59%;           /* indigo-600 */
+    --series-1: #2a78d6;
+    --series-2: #eb6834;
 
     --trap-overstatement: 347 77% 50%;
     --trap-causal: 32 95% 44%;
@@ -106,4 +112,55 @@
   @media (prefers-reduced-motion: reduce) {
     .animate-underline-flash { animation: none; }
   }
+}
+
+/* 印刷（講師カルテ PDF 出力）: ライトトークンで白背景・黒文字にする */
+@media print {
+  :root {
+    --background: 0 0% 100%;
+    --surface: 0 0% 100%;
+    --border: 240 6% 82%;
+    --foreground: 240 6% 10%;
+    --muted: 240 4% 36%;
+    --accent: 243 75% 59%;
+    --series-1: #2a78d6;
+    --series-2: #eb6834;
+  }
+  html, body { background: #fff !important; color: #111 !important; }
+  .print-fit { height: auto !important; overflow: visible !important; }
+  @page { margin: 14mm; }
+}
+
+/* カルテの印刷レイアウト（画面上でプレビュー）: ライトトークンで紙面表示にする */
+.theme-paper {
+  --background: 0 0% 100%;
+  --surface: 0 0% 100%;
+  --border: 240 6% 82%;
+  --foreground: 240 6% 10%;
+  --muted: 240 4% 36%;
+  --accent: 243 75% 59%;
+  --series-1: #2a78d6;
+  --series-2: #eb6834;
+  background: hsl(var(--background));
+  color: hsl(var(--foreground));
+}
+
+/* 紙面・印刷時: ダーク向けの明るい文字色を、白背景で読める濃さへ置き換える */
+.theme-paper .text-rose-400, .theme-paper .text-rose-300 { color: #be123c; }
+.theme-paper .text-amber-400, .theme-paper .text-amber-300 { color: #b45309; }
+.theme-paper .text-emerald-400 { color: #047857; }
+.theme-paper .text-purple-400 { color: #7e22ce; }
+.theme-paper .text-slate-300 { color: #475569; }
+.theme-paper .text-cyan-400 { color: #0e7490; }
+.theme-paper .text-pink-400 { color: #be185d; }
+.theme-paper .text-sky-400 { color: #0369a1; }
+@media print {
+  .text-rose-400, .text-rose-300 { color: #be123c; }
+  .text-amber-400, .text-amber-300 { color: #b45309; }
+  .text-emerald-400 { color: #047857; }
+  .text-purple-400 { color: #7e22ce; }
+  .text-slate-300 { color: #475569; }
+  .text-cyan-400 { color: #0e7490; }
+  .text-pink-400 { color: #be185d; }
+  .text-sky-400 { color: #0369a1; }
 }

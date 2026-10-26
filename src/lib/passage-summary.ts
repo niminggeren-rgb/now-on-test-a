@@ -1,5 +1,5 @@
 import { ACTIVE_TRAP_TYPES } from '@/lib/scoring';
-import type { ActiveTrapType, PassageItem, PassageTheme, TargetTier } from '@/types/domain';
+import type { ActiveTrapType, PassageItem, PassageTheme, TargetTier, TrapType } from '@/types/domain';
 
 /** 一覧画面に渡す軽量な文章サマリ（本文・選択肢は含めない）。 */
 export interface PassageSummary {
@@ -53,4 +53,29 @@ export function buildPracticeHref(passageId: string, trap: ActiveTrapType | null
   const params = new URLSearchParams({ trap });
   if (queue.length > 0) params.set('queue', queue.join(','));
   return `${base}?${params.toString()}`;
+}
+
+/** 回答ログの表示用に、設問ID → 文章名・設問番号・選択肢ごとのトラップ を引く索引。 */
+export interface QuestionIndexEntry {
+  passageId: string;
+  passageTitle: string;
+  questionNumber: number;
+  /** 選択肢番号（文字列） → 実際のトラップ種別 */
+  traps: Record<string, TrapType>;
+}
+export type QuestionIndex = Record<string, QuestionIndexEntry>;
+
+export function buildQuestionIndex(passages: readonly PassageItem[]): QuestionIndex {
+  const index: QuestionIndex = {};
+  for (const p of passages) {
+    for (const q of p.questions) {
+      index[q.id] = {
+        passageId: p.id,
+        passageTitle: p.title,
+        questionNumber: q.questionNumber,
+        traps: Object.fromEntries(q.choices.map((c) => [String(c.choiceLabel), c.primaryTrapType])),
+      };
+    }
+  }
+  return index;
 }

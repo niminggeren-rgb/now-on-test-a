@@ -1,5 +1,7 @@
-import { PhasePlaceholder } from '@/components/layout/phase-placeholder';
+import { StudentCarteView } from '@/components/instructor/student-carte-view';
+import { MOCK_STUDENTS } from '@/lib/mock-data/students';
 
-export default function Page() {
-  return <PhasePlaceholder title="講師カルテ" phase={4} summary="塾講師向けの生徒別・思考の癖診断カルテを提供します。" />;
+// 現時点では、デモ用の架空の生徒データのみを表示する（認証・組織連携は未実装）。
+export default function InstructorPage() {
+  return <StudentCarteView students={MOCK_STUDENTS} />;
 }

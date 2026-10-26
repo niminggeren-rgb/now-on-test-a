@@ -9,7 +9,7 @@ export function TopBar({ connected }: { connected: boolean }) {
   const current = findNavItem(pathname);
 
   return (
-    <header className="flex h-12 shrink-0 items-center justify-between border-b bg-surface/80 px-4 backdrop-blur">
+    <header className="flex h-12 shrink-0 items-center justify-between border-b bg-surface/80 px-4 backdrop-blur print:hidden">
       <div className="flex items-baseline gap-2">
         <h1 className="text-sm font-semibold">{current?.label ?? 'Logical Vernacular'}</h1>
         {current && <span className="text-xs text-muted">{current.description}</span>}

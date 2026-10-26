@@ -65,15 +65,18 @@ export const submitAnswerInputSchema = z.object({
 });
 export type SubmitAnswerInput = z.input<typeof submitAnswerInputSchema>;
 
+const numberField = (label: string) =>
+  z.number({ invalid_type_error: `${label}は数値で入力してください`, required_error: `${label}を入力してください` });
+
 /** 模試登録の入力。 */
 export const mockExamInputSchema = z
   .object({
     examProvider: z.string().trim().min(1, '模試の主催を入力してください'),
     examName: z.string().trim().min(1, '模試名を入力してください'),
-    examDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, '日付形式が正しくありません'),
-    modernJapaneseScore: z.number().min(0, '0以上で入力してください'),
-    modernJapaneseMaxScore: z.number().positive('満点は1以上で入力してください'),
-    deviationValue: z.number().min(0).max(100),
+    examDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, '日付を入力してください'),
+    modernJapaneseScore: numberField('素点').min(0, '0以上で入力してください'),
+    modernJapaneseMaxScore: numberField('満点').positive('満点は1以上で入力してください'),
+    deviationValue: numberField('偏差値').min(0, '0〜100で入力してください').max(100, '0〜100で入力してください'),
     selfReflection: z.string().default(''),
   })
   .refine((v) => v.modernJapaneseScore <= v.modernJapaneseMaxScore, {
@@ -81,6 +84,7 @@ export const mockExamInputSchema = z
     path: ['modernJapaneseScore'],
   });
 export type MockExamInput = z.input<typeof mockExamInputSchema>;
+export type MockExamFormValues = z.output<typeof mockExamInputSchema>;
 
 /** API の ActionResult<T> レスポンスを検証するためのスキーマ生成。 */
 export function actionResultSchemaOf<T extends z.ZodTypeAny>(data: T) {

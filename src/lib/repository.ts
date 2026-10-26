@@ -19,6 +19,7 @@ import {
 } from '@/lib/schemas';
 import type { ActionResult } from '@/types/action';
 import type {
+  ActiveTrapType,
   AnswerLog,
   MockExamRecord,
   PassageItem,
@@ -45,6 +46,12 @@ export interface SubmitAnswerResult {
   synced: boolean;
 }
 
+export interface ExamAnalysisSummary {
+  advice: string;
+  /** 重点対策のトラップ種別 */
+  weaknesses: ActiveTrapType[];
+}
+
 export interface Repository {
   listPassages(): Promise<PassageItem[]>;
   getPassage(passageId: string): Promise<PassageItem | null>;
@@ -53,6 +60,8 @@ export interface Repository {
   submitAnswer(input: unknown): Promise<ActionResult<SubmitAnswerResult>>;
   listMockExams(): Promise<MockExamRecord[]>;
   addMockExam(input: unknown): Promise<ActionResult<MockExamRecord>>;
+  /** 答案画像の AI 解析結果を、指定した模試の記録に保存する。 */
+  attachExamAnalysis(examId: string, analysis: ExamAnalysisSummary): Promise<ActionResult<MockExamRecord>>;
   /** ローカル保存データを破棄し、初期データに戻す。 */
   resetLocalData(): void;
 }
@@ -561,6 +570,29 @@ export function createRepository(supabase: SupabaseClient | null, storage: Stora
     return { success: true, data: record };
   }
 
+  async function attachExamAnalysis(examId: string, analysis: ExamAnalysisSummary): Promise<ActionResult<MockExamRecord>> {
+    const exams = localExams();
+    const target = exams.find((e) => e.id === examId);
+    if (!target) return { success: false, error: '対象の模試が見つかりません' };
+
+    const updated: MockExamRecord = {
+      ...target,
+      aiOverallAdvice: analysis.advice,
+      analyzedWeaknesses: [...analysis.weaknesses],
+    };
+
+    const userId = await remoteUserId();
+    if (supabase && userId && UUID_RE.test(examId)) {
+      try {
+        await supabase.from('mock_exams').update({ ai_overall_advice: analysis.advice }).eq('id', examId).eq('user_id', userId);
+      } catch {
+        // ローカル保存のみで続行
+      }
+    }
+    writeLocal(storage, STORAGE_KEYS.mockExams, exams.map((e) => (e.id === examId ? updated : e)).sort(byDateAsc));
+    return { success: true, data: updated };
+  }
+
   function resetLocalData(): void {
     if (!storage) return;
     for (const key of Object.values(STORAGE_KEYS)) {
@@ -580,6 +612,7 @@ export function createRepository(supabase: SupabaseClient | null, storage: Stora
     submitAnswer,
     listMockExams,
     addMockExam,
+    attachExamAnalysis,
     resetLocalData,
   };
 }

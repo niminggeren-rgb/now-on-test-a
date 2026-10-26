@@ -7,6 +7,7 @@ import {
 } from '@/lib/descriptive-grading';
 import { getGeminiClient } from '@/lib/gemini/client';
 import { evaluateWithGemini } from '@/lib/gemini/evaluate-descriptive';
+import { clientKey, createRateLimiter } from '@/lib/rate-limit';
 import { createRepository } from '@/lib/repository';
 import { createClient } from '@/lib/supabase/server';
 import type { ActionResult } from '@/types/action';
@@ -22,25 +23,7 @@ const bodySchema = z.object({
   answer: z.string().max(MAX_ANSWER_CHARS * 3),
 });
 
-// 簡易レート制限（プロセス内メモリ）。API キー利用料の濫用を抑える最低限の保護。
-const WINDOW_MS = 60_000;
-const MAX_REQUESTS = 10;
-const hits = new Map<string, number[]>();
-
-function rateLimited(key: string): boolean {
-  const now = Date.now();
-  const recent = (hits.get(key) ?? []).filter((t) => now - t < WINDOW_MS);
-  if (recent.length >= MAX_REQUESTS) {
-    hits.set(key, recent);
-    return true;
-  }
-  recent.push(now);
-  hits.set(key, recent);
-  if (hits.size > 5000) {
-    for (const [k, v] of hits) if (v.every((t) => now - t >= WINDOW_MS)) hits.delete(k);
-  }
-  return false;
-}
+const rateLimited = createRateLimiter(10);
 
 function fail(error: string, status: number, fieldErrors?: Record<string, string[]>) {
   const body: ActionResult<never> = { success: false, error, ...(fieldErrors ? { fieldErrors } : {}) };
@@ -48,8 +31,7 @@ function fail(error: string, status: number, fieldErrors?: Record<string, string
 }
 
 export async function POST(request: NextRequest) {
-  const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown';
-  if (rateLimited(ip)) return fail('リクエストが多すぎます。しばらく待ってから再度お試しください。', 429);
+  if (rateLimited(clientKey(request.headers))) return fail('リクエストが多すぎます。しばらく待ってから再度お試しください。', 429);
 
   let json: unknown;
   try {
