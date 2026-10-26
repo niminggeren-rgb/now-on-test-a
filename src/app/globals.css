@@ -1,0 +1,166 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  /* Dark (default): Deep Zinc */
+  :root {
+    --background: 240 10% 4%;        /* #09090B zinc-950 */
+    --surface: 240 6% 8%;            /* #121215 */
+    --border: 240 4% 16%;            /* #27272A zinc-800 */
+    --foreground: 240 5% 96%;        /* #F4F4F5 zinc-100 */
+    --muted: 240 5% 65%;             /* #A1A1AA zinc-400 */
+    --accent: 239 84% 67%;           /* #6366F1 indigo-500 */
+
+    /* Chart series (validate_palette.js 検証済み: dark surface #121215 / light #fff) */
+    --series-1: #3987e5;             /* blue */
+    --series-2: #d95926;             /* orange */
+
+    --trap-overstatement: 347 91% 60%; /* rose-500 */
+    --trap-causal: 38 92% 50%;         /* amber-500 */
+    --trap-swap: 271 91% 65%;          /* purple-500 */
+    --trap-unmentioned: 215 16% 47%;   /* slate */
+    --trap-flip: 188 94% 43%;          /* cyan-500 */
+    --trap-partial: 330 81% 60%;       /* pink-500 */
+  }
+
+  /* Light: Warm Academic Paper */
+  :root.light {
+    --background: 48 33% 97%;        /* #FAF9F5 */
+    --surface: 0 0% 100%;
+    --border: 240 6% 90%;            /* zinc-200 */
+    --foreground: 240 6% 10%;        /* zinc-900 */
+    --muted: 240 4% 36%;             /* zinc-600 */
+    --accent: 243 75% 59%;           /* indigo-600 */
+    --series-1: #2a78d6;
+    --series-2: #eb6834;
+
+    --trap-overstatement: 347 77% 50%;
+    --trap-causal: 32 95% 44%;
+    --trap-swap: 271 81% 56%;
+    --trap-unmentioned: 215 19% 35%;
+    --trap-flip: 192 91% 36%;
+    --trap-partial: 333 71% 51%;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  html {
+    color-scheme: dark;
+  }
+  html.light {
+    color-scheme: light;
+  }
+
+  body {
+    @apply bg-background font-sans text-foreground antialiased;
+  }
+
+  /* Custom scrollbar */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--border)) transparent;
+  }
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: hsl(var(--border));
+    border-radius: 9999px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--muted) / 0.6);
+  }
+
+  :focus-visible {
+    outline: 2px solid hsl(var(--accent));
+    outline-offset: 2px;
+  }
+}
+
+@layer utilities {
+  /* 縦書きレイアウト */
+  .writing-vertical {
+    writing-mode: vertical-rl;
+    text-orientation: upright;
+  }
+  /* 縦中横 */
+  .tcy {
+    text-combine-upright: all;
+  }
+  /* 評論文本文 */
+  .passage-text {
+    @apply font-serif leading-passage tracking-passage;
+  }
+}
+
+@layer utilities {
+  /* 設問切替時に傍線部をパルス発光させる */
+  @keyframes underline-flash {
+    0% { box-shadow: 0 0 0 0 hsl(var(--accent) / 0.55); }
+    100% { box-shadow: 0 0 0 10px hsl(var(--accent) / 0); }
+  }
+  .animate-underline-flash {
+    animation: underline-flash 1.1s ease-out 2;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .animate-underline-flash { animation: none; }
+  }
+}
+
+/* 印刷（講師カルテ PDF 出力）: ライトトークンで白背景・黒文字にする */
+@media print {
+  :root {
+    --background: 0 0% 100%;
+    --surface: 0 0% 100%;
+    --border: 240 6% 82%;
+    --foreground: 240 6% 10%;
+    --muted: 240 4% 36%;
+    --accent: 243 75% 59%;
+    --series-1: #2a78d6;
+    --series-2: #eb6834;
+  }
+  html, body { background: #fff !important; color: #111 !important; }
+  .print-fit { height: auto !important; overflow: visible !important; }
+  @page { margin: 14mm; }
+}
+
+/* カルテの印刷レイアウト（画面上でプレビュー）: ライトトークンで紙面表示にする */
+.theme-paper {
+  --background: 0 0% 100%;
+  --surface: 0 0% 100%;
+  --border: 240 6% 82%;
+  --foreground: 240 6% 10%;
+  --muted: 240 4% 36%;
+  --accent: 243 75% 59%;
+  --series-1: #2a78d6;
+  --series-2: #eb6834;
+  background: hsl(var(--background));
+  color: hsl(var(--foreground));
+}
+
+/* 紙面・印刷時: ダーク向けの明るい文字色を、白背景で読める濃さへ置き換える */
+.theme-paper .text-rose-400, .theme-paper .text-rose-300 { color: #be123c; }
+.theme-paper .text-amber-400, .theme-paper .text-amber-300 { color: #b45309; }
+.theme-paper .text-emerald-400 { color: #047857; }
+.theme-paper .text-purple-400 { color: #7e22ce; }
+.theme-paper .text-slate-300 { color: #475569; }
+.theme-paper .text-cyan-400 { color: #0e7490; }
+.theme-paper .text-pink-400 { color: #be185d; }
+.theme-paper .text-sky-400 { color: #0369a1; }
+@media print {
+  .text-rose-400, .text-rose-300 { color: #be123c; }
+  .text-amber-400, .text-amber-300 { color: #b45309; }
+  .text-emerald-400 { color: #047857; }
+  .text-purple-400 { color: #7e22ce; }
+  .text-slate-300 { color: #475569; }
+  .text-cyan-400 { color: #0e7490; }
+  .text-pink-400 { color: #be185d; }
+  .text-sky-400 { color: #0369a1; }
+}
