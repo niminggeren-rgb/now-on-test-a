@@ -1,8 +1,8 @@
 import assert from 'node:assert/strict';
 import type { SupabaseClient } from '@supabase/supabase-js';
-import { INITIAL_TRAP_STATS } from '../src/lib/mock-data/analytics';
+import { INITIAL_ANSWER_LOGS, INITIAL_MOCK_EXAMS, INITIAL_TRAP_STATS } from './fixtures/sample-analytics';
 import { createRepository, STORAGE_KEYS, type StorageLike } from '../src/lib/repository';
-import { computeWeaknessScore } from '../src/lib/scoring';
+import { computeWeaknessScore, emptyTrapStats } from '../src/lib/scoring';
 
 function memoryStorage(): StorageLike & { data: Map<string, string> } {
   const data = new Map<string, string>();
@@ -17,9 +17,37 @@ function memoryStorage(): StorageLike & { data: Map<string, string> } {
 const PASSAGE = 'passage-aesthetics-001';
 const Q = `${PASSAGE}-q1`; // 正解=3, 1:OVER 2:CAUSAL 4:SWAP
 
+function seed(storage: StorageLike) {
+  storage.setItem(STORAGE_KEYS.trapStats, JSON.stringify(INITIAL_TRAP_STATS));
+  storage.setItem(STORAGE_KEYS.answerLogs, JSON.stringify(INITIAL_ANSWER_LOGS));
+  storage.setItem(STORAGE_KEYS.mockExams, JSON.stringify(INITIAL_MOCK_EXAMS));
+}
+
 async function main() {
-  // 1) Supabase 未接続: ローカルのみで動作
+  // 0) 初回アクセス（保存データなし）: ダミーデータを返さず、完全に空の状態であること
+  const fresh = createRepository(null, memoryStorage());
+  assert.deepEqual(await fresh.getTrapStats(), emptyTrapStats());
+  assert.ok((await fresh.getTrapStats()).every((s) => s.encounteredCount === 0 && s.weaknessScore === 0));
+  assert.deepEqual(await fresh.listAnswerLogs(), []);
+  assert.deepEqual(await fresh.listMockExams(), []);
+  // 1問解くと、その1問ぶんだけが集計される（0件 → 実データ）
+  const first = await fresh.submitAnswer({
+    passageId: PASSAGE, questionId: Q, selectedChoiceLabel: 3, elimination: {}, timeSpentMs: 4200, confidenceLevel: null,
+  });
+  assert.ok(first.success && first.data.log.isCorrect);
+  const logs0 = await fresh.listAnswerLogs();
+  assert.equal(logs0.length, 1);
+  assert.equal(logs0[0]?.timeSpentMs, 4200);
+  const freshStats = await fresh.getTrapStats();
+  assert.equal(freshStats.reduce((n, s) => n + s.encounteredCount, 0), 3); // 誤答3択ぶん
+  assert.equal(freshStats.reduce((n, s) => n + s.trappedCount, 0), 0);
+  // reset で未演習に戻る
+  fresh.resetLocalData();
+  assert.deepEqual(await fresh.listAnswerLogs(), []);
+
+  // 1) Supabase 未接続: ローカルのみで動作（フィクスチャを保存済みの状態から開始）
   const storage = memoryStorage();
+  seed(storage);
   const repo = createRepository(null, storage);
   assert.equal((await repo.listPassages()).length, 3);
   assert.equal((await repo.getPassage('nope')), null);
@@ -86,9 +114,9 @@ async function main() {
   const desc = await repo.submitAnswer({ passageId: PASSAGE, questionId: `${PASSAGE}-q3`, selectedChoiceLabel: 1, elimination: {}, timeSpentMs: 0 });
   assert.equal(desc.success, false);
 
-  // 破損データは初期値にフォールバック
+  // 破損データは空の状態にフォールバック（ダミーは返さない）
   storage.setItem(STORAGE_KEYS.trapStats, '{broken');
-  assert.deepEqual(await createRepository(null, storage).getTrapStats(), [...INITIAL_TRAP_STATS]);
+  assert.deepEqual(await createRepository(null, storage).getTrapStats(), emptyTrapStats());
 
   // 2) 模試
   assert.equal((await repo.listMockExams()).length, 4);
@@ -113,7 +141,7 @@ async function main() {
   } as unknown as SupabaseClient;
   const repo3 = createRepository(failing, memoryStorage());
   assert.equal((await repo3.listPassages()).length, 3);
-  assert.deepEqual(await repo3.getTrapStats(), [...INITIAL_TRAP_STATS]);
+  assert.deepEqual(await repo3.getTrapStats(), emptyTrapStats());
   const r3 = await repo3.submitAnswer({ passageId: PASSAGE, questionId: Q, selectedChoiceLabel: 1, elimination: {}, timeSpentMs: 10 });
   assert.ok(r3.success && !r3.data.synced);
 

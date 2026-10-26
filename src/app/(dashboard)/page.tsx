@@ -9,10 +9,13 @@ export default async function DashboardPage() {
   const passages = await createRepository(supabase, null).listPassages();
   const geminiKey = process.env.GEMINI_API_KEY;
 
+  const first = passages[0];
+
   return (
     <DashboardView
       questionIndex={buildQuestionIndex(passages)}
       trapIndex={buildTrapIndex(passages)}
+      startHref={first ? `/practice/${encodeURIComponent(first.id)}` : '/practice'}
       env={{
         appMode: getAppMode(),
         supabase: supabase !== null,

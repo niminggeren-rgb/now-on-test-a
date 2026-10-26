@@ -6,7 +6,10 @@ import type {
   MockExamRecord,
   TrapWeaknessStat,
 } from '@/types/domain';
-import { findMockQuestion } from './passages';
+import { findMockQuestion } from '../../src/lib/mock-data/passages';
+
+// テスト用フィクスチャ。アプリ本体（リポジトリ）の初期データには使用しない。
+// 実際の回答履歴・弱点統計・模試は、ユーザーが入力・演習した内容だけから集計する。
 
 // ----------------------------------------------------------------------------
 // 直近の回答履歴（新しい順に10件）。正誤・正解トラップは実際の設問データから導出する。

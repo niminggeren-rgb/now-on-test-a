@@ -78,7 +78,7 @@ export function ExplanationDrawer({ result, timeLabel, isLast, onNext }: Explana
         className="mt-4 flex w-full items-center justify-center gap-2 rounded-md bg-accent px-3 py-2 text-sm font-medium text-white hover:opacity-90"
       >
         {isLast ? '結果を見る' : '次の設問へ'}
-        <kbd className="rounded bg-white/20 px-1.5 py-0.5 font-mono text-[10px]">Space</kbd>
+        <kbd className="hidden rounded bg-white/20 px-1.5 py-0.5 font-mono text-[10px] mouse:inline">Space</kbd>
         <ArrowRight className="h-4 w-4" aria-hidden />
       </button>
     </motion.section>

@@ -171,7 +171,7 @@ function ChoiceCard({
                       e.stopPropagation();
                       handlers.onSlashSegment(label, null);
                     }}
-                    className="rounded border px-1.5 py-0.5 text-muted hover:text-foreground"
+                    className="min-h-9 rounded border px-2 py-1 text-muted hover:text-foreground mouse:min-h-0 mouse:px-1.5 mouse:py-0.5"
                   >
                     傷マーク解除
                   </button>
@@ -184,10 +184,10 @@ function ChoiceCard({
                       handlers.onEliminateButton(label);
                     }}
                     aria-label={`選択肢${label}を${eliminated ? '消去解除' : '消去'}`}
-                    className="flex items-center gap-1 rounded border px-1.5 py-0.5 text-muted hover:text-foreground"
+                    className="flex min-h-9 items-center gap-1 rounded border px-2 py-1 text-muted hover:text-foreground mouse:min-h-0 mouse:px-1.5 mouse:py-0.5"
                   >
                     <Slash className="h-3 w-3" aria-hidden />
-                    消去<kbd className="font-mono text-[10px]">X</kbd>
+                    消去<kbd className="hidden font-mono text-[10px] mouse:inline">X</kbd>
                   </button>
                   <button
                     type="button"
@@ -197,10 +197,10 @@ function ChoiceCard({
                     }}
                     aria-label={`選択肢${label}のトラップ種別を指定`}
                     aria-expanded={pickerOpen}
-                    className="flex items-center gap-1 rounded border px-1.5 py-0.5 text-muted hover:text-foreground"
+                    className="flex min-h-9 items-center gap-1 rounded border px-2 py-1 text-muted hover:text-foreground mouse:min-h-0 mouse:px-1.5 mouse:py-0.5"
                   >
                     <Tag className="h-3 w-3" aria-hidden />
-                    トラップ<kbd className="font-mono text-[10px]">T</kbd>
+                    トラップ<kbd className="hidden font-mono text-[10px] mouse:inline">T</kbd>
                   </button>
                   <button
                     type="button"
@@ -210,10 +210,10 @@ function ChoiceCard({
                     }}
                     aria-pressed={candidate}
                     aria-label={`選択肢${label}を解答候補にする`}
-                    className="flex items-center gap-1 rounded border px-1.5 py-0.5 text-muted hover:text-foreground"
+                    className="flex min-h-9 items-center gap-1 rounded border px-2 py-1 text-muted hover:text-foreground mouse:min-h-0 mouse:px-1.5 mouse:py-0.5"
                   >
                     <Check className="h-3 w-3" aria-hidden />
-                    候補<kbd className="font-mono text-[10px]">C</kbd>
+                    候補<kbd className="hidden font-mono text-[10px] mouse:inline">C</kbd>
                   </button>
                 </span>
               </div>

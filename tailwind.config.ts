@@ -1,5 +1,6 @@
 import type { Config } from 'tailwindcss';
 import animate from 'tailwindcss-animate';
+import plugin from 'tailwindcss/plugin';
 
 const config: Config = {
   darkMode: 'class',
@@ -32,7 +33,13 @@ const config: Config = {
       letterSpacing: { passage: '0.04em' },
     },
   },
-  plugins: [animate],
+  plugins: [
+    animate,
+    // `mouse:` = マウス等（ホバー可能・精密ポインタ）の端末。iPhone / iPad などのタッチ端末では適用されない。
+    plugin(({ addVariant }) => {
+      addVariant('mouse', '@media (hover: hover) and (pointer: fine)');
+    }),
+  ],
 };
 
 export default config;

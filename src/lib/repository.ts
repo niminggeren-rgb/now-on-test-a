@@ -1,7 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { z } from 'zod';
 import { createClient as createBrowserSupabase } from '@/lib/supabase/client';
-import { INITIAL_ANSWER_LOGS, INITIAL_MOCK_EXAMS, INITIAL_TRAP_STATS } from '@/lib/mock-data/analytics';
 import { MOCK_PASSAGES } from '@/lib/mock-data/passages';
 import {
   applyAnswerToStats,
@@ -62,7 +61,7 @@ export interface Repository {
   addMockExam(input: unknown): Promise<ActionResult<MockExamRecord>>;
   /** 答案画像の AI 解析結果を、指定した模試の記録に保存する。 */
   attachExamAnalysis(examId: string, analysis: ExamAnalysisSummary): Promise<ActionResult<MockExamRecord>>;
-  /** ローカル保存データを破棄し、初期データに戻す。 */
+  /** ローカル保存データ（回答履歴・弱点統計・模試）を破棄し、未演習の状態に戻す。 */
   resetLocalData(): void;
 }
 
@@ -329,11 +328,11 @@ export function createRepository(supabase: SupabaseClient | null, storage: Stora
   // ---- stats / logs -------------------------------------------------------
 
   function localStats(): TrapWeaknessStat[] {
-    return normalizeStats(readLocal(storage, STORAGE_KEYS.trapStats, z.array(trapWeaknessStatSchema)) ?? INITIAL_TRAP_STATS);
+    return normalizeStats(readLocal(storage, STORAGE_KEYS.trapStats, z.array(trapWeaknessStatSchema)) ?? emptyTrapStats());
   }
 
   function localLogs(): AnswerLog[] {
-    return readLocal(storage, STORAGE_KEYS.answerLogs, z.array(answerLogSchema)) ?? [...INITIAL_ANSWER_LOGS];
+    return readLocal(storage, STORAGE_KEYS.answerLogs, z.array(answerLogSchema)) ?? [];
   }
 
   async function remoteStats(userId: string): Promise<TrapWeaknessStat[] | null> {
@@ -484,7 +483,7 @@ export function createRepository(supabase: SupabaseClient | null, storage: Stora
   // ---- mock exams ---------------------------------------------------------
 
   function localExams(): MockExamRecord[] {
-    return readLocal(storage, STORAGE_KEYS.mockExams, z.array(mockExamRecordSchema)) ?? [...INITIAL_MOCK_EXAMS];
+    return readLocal(storage, STORAGE_KEYS.mockExams, z.array(mockExamRecordSchema)) ?? [];
   }
 
   const byDateAsc = (a: MockExamRecord, b: MockExamRecord) => a.examDate.localeCompare(b.examDate);

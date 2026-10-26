@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { buildPrescription, computeKpis, severityOf, toTrapRates } from '../src/lib/analytics';
-import { INITIAL_ANSWER_LOGS, INITIAL_TRAP_STATS } from '../src/lib/mock-data/analytics';
+import { INITIAL_ANSWER_LOGS, INITIAL_TRAP_STATS } from './fixtures/sample-analytics';
 
 const rates = toTrapRates(INITIAL_TRAP_STATS);
 assert.equal(rates.length, 6);

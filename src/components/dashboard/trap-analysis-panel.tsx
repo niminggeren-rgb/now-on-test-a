@@ -31,6 +31,14 @@ export function SeverityBadge({ score }: { score: number }) {
   );
 }
 
+function NoDataBadge() {
+  return (
+    <span className="inline-flex items-center rounded border border-border px-1.5 py-0.5 text-[11px] text-muted">
+      未遭遇
+    </span>
+  );
+}
+
 interface TrapAnalysisPanelProps {
   stats: readonly TrapWeaknessStat[];
   /** トラップを含む問題への直行リンク。null ならリンクを出さない。 */
@@ -72,7 +80,7 @@ export function TrapAnalysisPanel({ stats, practiceHrefFor, initialTrap }: TrapA
                 >
                   <div className="flex items-center gap-2 text-xs">
                     <span className={cn('rounded border px-1.5 py-0.5 font-medium', m.badgeColorClass)}>{m.shortLabel}</span>
-                    <SeverityBadge score={r.weaknessScore} />
+                    {r.encountered === 0 ? <NoDataBadge /> : <SeverityBadge score={r.weaknessScore} />}
                     <span className="ml-auto font-mono text-[10px] text-muted">遭遇 {r.encountered}</span>
                     <ChevronRight className={cn('h-3.5 w-3.5 text-muted', isActive && 'text-accent')} aria-hidden />
                   </div>
@@ -100,7 +108,7 @@ export function TrapAnalysisPanel({ stats, practiceHrefFor, initialTrap }: TrapA
           <section aria-label="論理処方箋" data-testid="prescription" className="rounded-lg border bg-background/60 p-4 text-sm">
             <div className="flex flex-wrap items-center gap-2">
               <h4 className="font-semibold">{meta.label}</h4>
-              <SeverityBadge score={stat?.weaknessScore ?? 0} />
+              {(stat?.encounteredCount ?? 0) === 0 ? <NoDataBadge /> : <SeverityBadge score={stat?.weaknessScore ?? 0} />}
             </div>
             <p className="mt-2 text-xs leading-relaxed text-muted">{prescription.evidence}</p>
             <h5 className="mt-3 text-xs font-semibold">なぜ引っかかるのか</h5>

@@ -8,12 +8,15 @@ import { buildPracticeHref, type QuestionIndex, type TrapIndex } from '@/lib/pas
 import { createBrowserRepository } from '@/lib/repository';
 import { TRAP_METADATA_MAP, type ActiveTrapType, type AnswerLog, type TrapWeaknessStat } from '@/types/domain';
 import { cn } from '@/lib/utils';
+import { DashboardEmptyState } from './dashboard-empty-state';
 import { RecentLogsTable } from './recent-logs-table';
 import { SeverityBadge, TrapAnalysisPanel } from './trap-analysis-panel';
 
 interface DashboardViewProps {
   questionIndex: QuestionIndex;
   trapIndex: TrapIndex;
+  /** 未演習時の「最初の1問を解く」の遷移先 */
+  startHref: string;
   env: { appMode: string; supabase: boolean; gemini: boolean };
 }
 
@@ -50,17 +53,29 @@ function KpiCard({
   );
 }
 
-export function DashboardView({ questionIndex, trapIndex, env }: DashboardViewProps) {
+export function DashboardView({ questionIndex, trapIndex, startHref, env }: DashboardViewProps) {
   const [data, setData] = useState<{ stats: TrapWeaknessStat[]; logs: AnswerLog[] } | null>(null);
 
   useEffect(() => {
     let cancelled = false;
     const repo = createBrowserRepository();
-    void Promise.all([repo.getTrapStats(), repo.listAnswerLogs(10)]).then(([stats, logs]) => {
-      if (!cancelled) setData({ stats, logs });
-    });
+    const load = () =>
+      void Promise.all([repo.getTrapStats(), repo.listAnswerLogs(10)]).then(([stats, logs]) => {
+        if (!cancelled) setData({ stats, logs });
+      });
+    load();
+    // 別タブ・別画面での演習結果を、戻ってきたときに反映する
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') load();
+    };
+    window.addEventListener('focus', load);
+    window.addEventListener('storage', load);
+    document.addEventListener('visibilitychange', onVisible);
     return () => {
       cancelled = true;
+      window.removeEventListener('focus', load);
+      window.removeEventListener('storage', load);
+      document.removeEventListener('visibilitychange', onVisible);
     };
   }, []);
 
@@ -78,6 +93,19 @@ export function DashboardView({ questionIndex, trapIndex, env }: DashboardViewPr
           ))}
         </div>
         <div className="h-96 animate-pulse rounded-lg border bg-surface" />
+      </div>
+    );
+  }
+
+  // 回答履歴が0件のときは、数値・チャートを出さずに案内だけを表示する
+  if (data.logs.length === 0) {
+    return (
+      <div className="mx-auto max-w-6xl space-y-8">
+        <DashboardEmptyState startHref={startHref} />
+        <p className="text-center font-mono text-[11px] text-muted">
+          mode: {env.appMode} · supabase: {env.supabase ? 'configured' : 'not configured (local)'} · gemini:{' '}
+          {env.gemini ? 'configured' : 'not configured (local fallback)'}
+        </p>
       </div>
     );
   }
