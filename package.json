@@ -13,7 +13,8 @@
     "test:grading": "tsx scripts/test-grading.ts",
     "test:analytics": "tsx scripts/test-analytics.ts",
     "test:exam": "tsx scripts/test-exam-analysis.ts",
-    "test:instructor": "tsx scripts/test-instructor.ts"
+    "test:instructor": "tsx scripts/test-instructor.ts",
+    "test:import": "tsx scripts/test-import.ts"
   },
   "devDependencies": {
     "@types/node": "^22.20.5",

@@ -3,7 +3,8 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { Database, HardDrive, Menu, X } from 'lucide-react';
+import { Clapperboard, Database, HardDrive, Menu, X } from 'lucide-react';
+import { PLAY_SPLASH_EVENT } from '@/components/common/splash-host';
 import { cn } from '@/lib/utils';
 import { findNavItem, NAV_ITEMS } from './nav-items';
 
@@ -33,12 +34,24 @@ export function TopBar({ connected }: { connected: boolean }) {
         <h1 className="truncate text-sm font-semibold">{current?.label ?? 'Logical Vernacular'}</h1>
         {current && <span className="hidden text-xs text-muted sm:inline">{current.description}</span>}
       </div>
-      <div
-        className="flex shrink-0 items-center gap-1.5 rounded-md border px-2 py-1 font-mono text-[11px] text-muted"
-        title={connected ? 'Supabase に接続中' : 'Supabase 未接続: ローカルのデータで動作します'}
-      >
-        {connected ? <Database className="h-3 w-3" aria-hidden /> : <HardDrive className="h-3 w-3" aria-hidden />}
-        {connected ? 'supabase' : 'local'}
+      <div className="flex shrink-0 items-center gap-2">
+        <button
+          type="button"
+          onClick={() => window.dispatchEvent(new Event(PLAY_SPLASH_EVENT))}
+          aria-label="起動演出を再生"
+          title="起動演出を再生"
+          className="flex h-8 items-center gap-1.5 rounded-md border px-2 text-[11px] text-muted hover:text-foreground"
+        >
+          <Clapperboard className="h-3.5 w-3.5" aria-hidden />
+          <span className="hidden sm:inline">起動演出を再生</span>
+        </button>
+        <div
+          className="flex items-center gap-1.5 rounded-md border px-2 py-1 font-mono text-[11px] text-muted"
+          title={connected ? 'Supabase に接続中' : 'Supabase 未接続: ローカルのデータで動作します'}
+        >
+          {connected ? <Database className="h-3 w-3" aria-hidden /> : <HardDrive className="h-3 w-3" aria-hidden />}
+          {connected ? 'supabase' : 'local'}
+        </div>
       </div>
 
       {menuOpen && (

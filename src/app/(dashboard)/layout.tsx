@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { SplashHost } from '@/components/common/splash-host';
 import { AppSidebar } from '@/components/layout/app-sidebar';
 import { ShortcutHelpModal } from '@/components/layout/shortcut-help-modal';
 import { TopBar } from '@/components/layout/top-bar';
@@ -15,6 +16,7 @@ export default async function DashboardLayout({ children }: { children: ReactNod
         <main className="flex-1 overflow-y-auto p-4 md:p-6 print:overflow-visible print:p-0">{children}</main>
       </div>
       <ShortcutHelpModal />
+      <SplashHost />
     </div>
   );
 }
