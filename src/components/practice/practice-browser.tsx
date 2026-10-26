@@ -43,7 +43,7 @@ export function PracticeBrowser({ passages, trapIndex }: { passages: PassageSumm
     if (!stats) return null;
     return (
       [...stats]
-        .filter((s) => (trapIndex[s.trapType]?.length ?? 0) > 0)
+        .filter((s) => s.encounteredCount > 0 && s.weaknessScore > 0 && (trapIndex[s.trapType]?.length ?? 0) > 0)
         .sort((a, b) => b.weaknessScore - a.weaknessScore)[0] ?? null
     );
   }, [stats, trapIndex]);
@@ -73,8 +73,10 @@ export function PracticeBrowser({ passages, trapIndex }: { passages: PassageSumm
                 <span className="font-mono">（弱点スコア {worst.weaknessScore.toFixed(1)}）</span>
                 。このトラップを含む設問だけを連続で演習します。
               </>
-            ) : (
+            ) : stats === null ? (
               '弱点データを読み込み中です…'
+            ) : (
+              'まだ弱点データがありません。何問か解くと、引っかかりやすいトラップを集中特訓できます。'
             )}
           </p>
         </div>

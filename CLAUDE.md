@@ -98,6 +98,14 @@ NEXT_PUBLIC_APP_MODE=hybrid # 'supabase' | 'hybrid' (DB未接続時もモック�
   - デザインは Linear / Raycast を範とした高密度・高コントラストなミニマルUIとする。
   - 評論文の本文表示には明朝体（`font-serif`: Noto Serif JP / 游明朝）、UI・論理構造解説・トラップバッジにはサンセリフ（`font-sans`: Inter / Noto Sans JP）、ショートカットキー表記や数値には等幅フォント（`font-mono`: JetBrains Mono）を厳格に使い分ける。
   - 色は `globals.css` の CSS 変数（トークン）経由で参照し、コンポーネントに生の hex を書かない。
+- **Mobile / Touch:**
+  - ブレークポイントは `md`（768px）。`md` 未満は本文/設問を固定タブで切替え、`md` 以上は左右スプリット。高さは `dvh` を使う。
+  - タッチ端末（iPhone/iPad）では、ショートカットガイドの代わりに `MobileActionBar`（消去・トラップ・候補・解答）を表示する。
+    マウス環境かどうかは Tailwind のカスタムバリアント `mouse:`（`hover: hover` かつ `pointer: fine`）で判定する。
+  - トラップ選択は `md` 未満でボトムシート（body へポータル）、`md` 以上でポップオーバー。`fixed` 要素を transform を持つ要素の内側に置かない。
+- **No Dummy Data:**
+  - 回答履歴・弱点統計・模試の初期値は「空」。ダミー値をユーザーの実績として表示しない（`scripts/fixtures/` はテスト専用）。
+  - 履歴0件のダッシュボードは Empty State（`DashboardEmptyState`）を表示する。
 - **Keyboard-First UX:**
   - 演習画面ではマウスを一切使わずに「選択肢移動(1-4) → 消去線トグル(X) → トラップ理由タグ付け(T) → 回答確定(Space/Enter) → 次の問題(N) → 縦横書字方向切替(V)」が完結すること。
 

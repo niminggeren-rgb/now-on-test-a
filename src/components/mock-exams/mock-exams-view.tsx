@@ -81,6 +81,13 @@ export function MockExamsView() {
               </tr>
             </thead>
             <tbody>
+              {newestFirst.length === 0 && (
+                <tr>
+                  <td colSpan={5} className="px-3 py-8 text-center text-muted">
+                    模試の記録がありません。上のフォームから成績を登録してください。
+                  </td>
+                </tr>
+              )}
               {newestFirst.map((e) => (
                 <tr key={e.id} className="border-b align-top last:border-0">
                   <td className="whitespace-nowrap px-3 py-2.5 font-mono text-muted">{e.examDate}</td>

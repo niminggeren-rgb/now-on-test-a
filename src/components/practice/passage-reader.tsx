@@ -32,6 +32,8 @@ interface PassageReaderProps {
   structureUnlocked: boolean;
   timerLabel: string;
   timerRunning: boolean;
+  /** 表示中か（モバイルのタブで非表示のときは false）。true になった時点で傍線部へスクロールする。 */
+  active?: boolean;
 }
 
 function Switch({
@@ -51,7 +53,7 @@ function Switch({
       role="switch"
       aria-checked={checked}
       onClick={onClick}
-      className="flex items-center gap-1.5 rounded-md border px-2 py-1 text-xs text-muted transition-colors hover:text-foreground"
+      className="flex min-h-9 items-center gap-1.5 rounded-md border px-2 py-1 text-xs text-muted transition-colors hover:text-foreground mouse:min-h-0"
     >
       <span
         aria-hidden
@@ -68,7 +70,7 @@ function Switch({
         />
       </span>
       {label}
-      <kbd className="rounded border bg-background px-1 font-mono text-[10px]">{keyHint}</kbd>
+      <kbd className="hidden rounded border bg-background px-1 font-mono text-[10px] mouse:inline">{keyHint}</kbd>
     </button>
   );
 }
@@ -83,6 +85,7 @@ export function PassageReader({
   structureUnlocked,
   timerLabel,
   timerRunning,
+  active = true,
 }: PassageReaderProps) {
   const vertical = writingMode === 'vertical';
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -104,18 +107,18 @@ export function PassageReader({
 
   // 設問切替・書字方向切替時に該当の傍線部へスクロール
   useEffect(() => {
-    if (!activeUnderlineId) return;
+    if (!activeUnderlineId || !active) return;
     const target = underlineRefs.current.get(activeUnderlineId);
     if (!target) return;
     const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     target.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'center', inline: 'center' });
-  }, [activeUnderlineId, writingMode, passage.id]);
+  }, [activeUnderlineId, writingMode, passage.id, active]);
 
   const structure = passage.logicalStructure;
 
   return (
-    <div className="flex h-full min-h-0 flex-col">
-      <div className="space-y-2 border-b bg-surface px-4 py-2.5">
+    <div className="flex min-h-0 flex-1 flex-col">
+      <div className="space-y-2 border-b bg-surface px-3 py-2 md:px-4 md:py-2.5">
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-xs">
           <span className="rounded border border-accent/40 bg-accent/10 px-1.5 py-0.5 font-medium text-accent">
             {THEME_LABELS[passage.theme]}
@@ -153,7 +156,7 @@ export function PassageReader({
             onClick={() => setStructureOpen((v) => !v)}
             aria-expanded={structureUnlocked && structureOpen}
             title={structureUnlocked ? undefined : '解答確定後に開けます'}
-            className="ml-auto flex items-center gap-1.5 rounded-md border px-2 py-1 text-xs text-muted transition-colors enabled:hover:text-foreground disabled:opacity-40"
+            className="ml-auto flex min-h-9 items-center gap-1.5 rounded-md border px-2 py-1 text-xs text-muted transition-colors enabled:hover:text-foreground disabled:opacity-40 mouse:min-h-0"
           >
             <Network className="h-3.5 w-3.5" aria-hidden />
             本文構造マップ
@@ -213,7 +216,7 @@ export function PassageReader({
         <article
           lang="ja"
           data-writing-mode={writingMode}
-          className={cn('passage-text p-6 text-[15px]', vertical ? 'writing-vertical h-full py-8' : 'mx-auto max-w-2xl')}
+          className={cn('passage-text p-4 text-[15px] md:p-6', vertical ? 'writing-vertical h-full py-8' : 'mx-auto max-w-2xl')}
         >
           <header className={cn(vertical ? 'ml-8' : 'mb-6')}>
             <h2 className="font-serif text-lg font-bold leading-snug tracking-normal">{passage.title}</h2>
