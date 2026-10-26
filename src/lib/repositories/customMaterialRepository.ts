@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { clampDelta } from '@/lib/exam-diagnosis';
 import {
   ExamAnalysisSchema,
   ImportedMaterialSchema,
@@ -150,11 +151,11 @@ export const customMaterialRepository = {
     const current = this.getTrapWeaknesses();
     const d = analysis.trapWeaknessDelta;
     const updatedWeaknesses: TrapWeaknessScores = {
-      overstatement: clamp(current.overstatement + d.overstatement),
-      causal_inversion: clamp(current.causal_inversion + d.causal_inversion),
-      substitution: clamp(current.substitution + d.substitution),
-      unmentioned: clamp(current.unmentioned + d.unmentioned),
-      subject_object_reversal: clamp(current.subject_object_reversal + d.subject_object_reversal),
+      overstatement: clamp(current.overstatement + clampDelta(d.overstatement)),
+      causal_inversion: clamp(current.causal_inversion + clampDelta(d.causal_inversion)),
+      substitution: clamp(current.substitution + clampDelta(d.substitution)),
+      unmentioned: clamp(current.unmentioned + clampDelta(d.unmentioned)),
+      subject_object_reversal: clamp(current.subject_object_reversal + clampDelta(d.subject_object_reversal)),
       updatedAt: new Date().toISOString(),
     };
     const carteRecord: InstructorCarteRecord = {
