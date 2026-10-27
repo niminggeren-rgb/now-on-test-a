@@ -1,5 +1,5 @@
 import { Type, type GoogleGenAI, type Schema } from '@google/genai';
-import { GEMINI_MODELS } from '@/lib/gemini/client';
+import { describeGeminiError, GEMINI_MODELS } from '@/lib/gemini/client';
 import type { AllowedImageType } from '@/lib/exam-analysis';
 import { parseExamDiagnosisJson } from '@/lib/exam-diagnosis';
 import type { ExamAnalysisResult } from '@/types/ai-pipeline';
@@ -133,7 +133,7 @@ export interface ExamImagePart {
 
 export type ExamAnalysisOutcome =
   | { ok: true; data: ExamAnalysisResult }
-  | { ok: false; reason: 'timeout' | 'busy' | 'invalid' };
+  | { ok: false; reason: 'timeout' | 'busy' | 'invalid'; detail?: string };
 
 /** 429（利用上限）/ 503（過負荷）など、時間をおけば通る上流エラーか */
 function isBusyError(err: unknown): boolean {
@@ -181,7 +181,8 @@ export async function analyzeExamWithGemini(
     return data ? { ok: true, data } : { ok: false, reason: 'invalid' };
   } catch (err) {
     if (controller.signal.aborted) return { ok: false, reason: 'timeout' };
-    return { ok: false, reason: isBusyError(err) ? 'busy' : 'invalid' };
+    console.error('[analyze-exam] Gemini error:', err);
+    return { ok: false, reason: isBusyError(err) ? 'busy' : 'invalid', detail: describeGeminiError(err) };
   } finally {
     clearTimeout(timer);
   }

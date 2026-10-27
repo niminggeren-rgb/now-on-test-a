@@ -59,6 +59,7 @@ export async function POST(request: NextRequest) {
   if (!outcome.ok) {
     if (outcome.reason === 'timeout') return fail('処理がタイムアウトしました。もう一度お試しください。', 504);
     if (outcome.reason === 'busy') return fail('AIサービスが混み合っています。しばらく待ってから、もう一度お試しください。', 503);
+    if (outcome.detail) return fail(outcome.detail, 502); // AI 呼び出し自体が失敗した原因（キー無効・モデル未対応など）
     return fail('診断結果を読み取れませんでした。もう一度お試しください（改善しない場合は、撮り直してください）。', 502);
   }
   const result = outcome.data;
