@@ -8,6 +8,7 @@ import { buildPracticeHref, type QuestionIndex, type TrapIndex } from '@/lib/pas
 import { createBrowserRepository } from '@/lib/repository';
 import { TRAP_METADATA_MAP, type ActiveTrapType, type AnswerLog, type TrapWeaknessStat } from '@/types/domain';
 import { cn } from '@/lib/utils';
+import { AiStatusFooter } from '@/components/layout/ai-status-footer';
 import { DashboardEmptyState } from './dashboard-empty-state';
 import { RecentLogsTable } from './recent-logs-table';
 import { SeverityBadge, TrapAnalysisPanel } from './trap-analysis-panel';
@@ -17,7 +18,6 @@ interface DashboardViewProps {
   trapIndex: TrapIndex;
   /** 未演習時の「最初の1問を解く」の遷移先 */
   startHref: string;
-  env: { appMode: string; supabase: boolean; gemini: boolean };
 }
 
 function KpiCard({
@@ -53,7 +53,7 @@ function KpiCard({
   );
 }
 
-export function DashboardView({ questionIndex, trapIndex, startHref, env }: DashboardViewProps) {
+export function DashboardView({ questionIndex, trapIndex, startHref }: DashboardViewProps) {
   const [data, setData] = useState<{ stats: TrapWeaknessStat[]; logs: AnswerLog[] } | null>(null);
 
   useEffect(() => {
@@ -102,10 +102,7 @@ export function DashboardView({ questionIndex, trapIndex, startHref, env }: Dash
     return (
       <div className="mx-auto max-w-6xl space-y-8">
         <DashboardEmptyState startHref={startHref} />
-        <p className="text-center font-mono text-[11px] text-muted">
-          mode: {env.appMode} · supabase: {env.supabase ? 'configured' : 'not configured (local)'} · gemini:{' '}
-          {env.gemini ? 'configured' : 'not configured (local fallback)'}
-        </p>
+        <AiStatusFooter />
       </div>
     );
   }
@@ -175,10 +172,7 @@ export function DashboardView({ questionIndex, trapIndex, startHref, env }: Dash
         <RecentLogsTable logs={data.logs} questionIndex={questionIndex} />
       </section>
 
-      <p className="font-mono text-[11px] text-muted">
-        mode: {env.appMode} · supabase: {env.supabase ? 'configured' : 'not configured (mock)'} · gemini:{' '}
-        {env.gemini ? 'configured' : 'not configured (local fallback)'}
-      </p>
+      <AiStatusFooter />
     </div>
   );
 }

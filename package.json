@@ -15,7 +15,8 @@
     "test:exam": "tsx scripts/test-exam-analysis.ts",
     "test:instructor": "tsx scripts/test-instructor.ts",
     "test:import": "tsx scripts/test-import.ts",
-    "test:diagnosis": "tsx scripts/test-exam-diagnosis.ts"
+    "test:diagnosis": "tsx scripts/test-exam-diagnosis.ts",
+    "test:phase8": "tsx scripts/test-phase8.ts"
   },
   "devDependencies": {
     "@types/node": "^22.20.5",

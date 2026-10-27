@@ -535,6 +535,7 @@ export function PracticeSession({ passage, trapFocus, nextPassageHref }: Practic
               result={result}
               timeLabel={formatElapsed(qState.elapsedMs)}
               isLast={qIndex >= questions.length - 1}
+              passageText={passage.paragraphs.map((p) => p.text).join('\n')}
               onNext={next}
             />
           )}

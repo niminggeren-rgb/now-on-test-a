@@ -537,3 +537,15 @@ CREATE POLICY "Update own custom passages" ON public.custom_passages
 DROP POLICY IF EXISTS "Delete own custom passages" ON public.custom_passages;
 CREATE POLICY "Delete own custom passages" ON public.custom_passages
     FOR DELETE USING (auth.uid() = user_id);
+
+-- ----------------------------------------------------------------------------
+-- 8. Phase 8: explanation_caches（オンデマンド解説の共有キャッシュ）
+-- ----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS public.explanation_caches (
+    cache_key TEXT PRIMARY KEY,
+    mode TEXT NOT NULL CHECK (mode IN ('BINARY_OPPOSITION_MAP', 'THINKING_PROCESS')),
+    payload JSONB NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+ALTER TABLE public.explanation_caches ENABLE ROW LEVEL SECURITY;
