@@ -85,7 +85,7 @@ export function ImageWorkbench({ onCommit }: ImageWorkbenchProps) {
     setError(null);
     setCommitted(null);
     try {
-      const prepared = await Promise.all(files.map(prepareImageFile));
+      const prepared = await Promise.all(files.map((f) => prepareImageFile(f)));
       const res = await fetch('/api/ai/classify-and-ocr', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

@@ -15,7 +15,8 @@ import {
   Sparkles,
   XCircle,
 } from 'lucide-react';
-import { prepareImageFile, type PreparedImage } from '@/lib/client-image';
+import { describeApiFailure } from '@/lib/api-error';
+import { EXAM_UPLOAD_COMPRESSION, prepareImageFile, type PreparedImage } from '@/lib/client-image';
 import { summarizeDiagnostics } from '@/lib/exam-diagnosis';
 import { trapBadgeClass } from '@/lib/import-material';
 import { customMaterialRepository, type TrapWeaknessScores } from '@/lib/repositories/customMaterialRepository';
@@ -81,7 +82,7 @@ export function ExamAnalysisStudio() {
   const load = async (file: File, set: (img: PreparedImage) => void) => {
     setError(null);
     try {
-      set(await prepareImageFile(file));
+      set(await prepareImageFile(file, EXAM_UPLOAD_COMPRESSION));
     } catch {
       setError('この画像形式は読み込めませんでした。JPEG または PNG で撮影・保存してください。');
     }
@@ -105,7 +106,7 @@ export function ExamAnalysisStudio() {
         }),
       });
       const json = (await res.json().catch(() => null)) as ActionResult<ExamAnalysisResult> | null;
-      if (!json || !json.success) throw new Error(json && !json.success ? json.error : 'W画像解析に失敗しました。');
+      if (!json || !json.success) throw new Error(describeApiFailure(res.status, json));
 
       setResult(json.data);
       // 弱点スコアと講師カルテへ同期（保存できない環境では表示のみ）
@@ -117,7 +118,8 @@ export function ExamAnalysisStudio() {
         setSyncFailed(true);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : '解析エラーが発生しました。');
+      // fetch 自体の失敗（TypeError）は通信の問題。それ以外は上で組み立てた理由をそのまま出す
+      setError(err instanceof TypeError ? '通信に失敗しました。ネットワークを確認して、もう一度お試しください。' : err instanceof Error ? err.message : '解析エラーが発生しました。');
     } finally {
       busy.current = false;
       setIsAnalyzing(false);

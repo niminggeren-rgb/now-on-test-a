@@ -9,6 +9,7 @@ import type { ActionResult } from '@/types/action';
 import type { ExamAnalysisResult } from '@/types/ai-pipeline';
 
 export const runtime = 'nodejs';
+// Vercel の関数の実行上限。Gemini 側は 50秒で打ち切る（analyze-exam.ts）
 export const maxDuration = 60;
 
 const MAX_BODY_BYTES = Math.ceil((2 * MAX_IMPORT_IMAGE_BYTES * 4) / 3) + 512 * 1024;
@@ -49,15 +50,18 @@ export async function POST(request: NextRequest) {
   const problem = toPart(parsed.data.problemImage);
   const answer = toPart(parsed.data.answerImage);
   if (problem === 'too_large' || answer === 'too_large') return fail('画像が大きすぎます（1枚4MBまで）', 413);
-  if (!problem || !answer) return fail('PNG または JPG の画像のみ解析できます', 400);
+  if (!problem || !answer) return fail('PNG・JPEG・WebP の画像のみ解析できます', 400);
 
   const ai = getGeminiClient();
   if (!ai) return fail('AI解析が利用できません（GEMINI_API_KEY が未設定です）。', 503);
 
-  const result = await analyzeExamWithGemini(ai, problem, answer);
-  if (!result) {
-    return fail('答案を診断できませんでした。ピントと明るさを確認し、もう一度撮影してください。', 502);
+  const outcome = await analyzeExamWithGemini(ai, problem, answer);
+  if (!outcome.ok) {
+    if (outcome.reason === 'timeout') return fail('処理がタイムアウトしました。もう一度お試しください。', 504);
+    if (outcome.reason === 'busy') return fail('AIサービスが混み合っています。しばらく待ってから、もう一度お試しください。', 503);
+    return fail('診断結果を読み取れませんでした。もう一度お試しください（改善しない場合は、撮り直してください）。', 502);
   }
+  const result = outcome.data;
   const body: ActionResult<ExamAnalysisResult> = { success: true, data: result };
   return NextResponse.json(body);
 }

@@ -4,7 +4,9 @@ import type { AllowedImageType } from '@/lib/exam-analysis';
 import { parseExamDiagnosisJson } from '@/lib/exam-diagnosis';
 import type { ExamAnalysisResult } from '@/types/ai-pipeline';
 
-const TIMEOUT_MS = 55_000;
+// Vercel の maxDuration(60秒)より前に自分で打ち切り、タイムアウトだと分かる形で応答を返す
+const TIMEOUT_MS = 50_000;
+const MAX_OUTPUT_TOKENS = 6144;
 
 const TRAP_ENUM = [
   'overstatement',
@@ -119,7 +121,9 @@ export const EXAM_SYSTEM_PROMPT = `
 4. 講師カルテ連動アドバイス (instructorAdvice):
    講師が次回の面談でそのまま使える headline と、具体的な指導アクション (actionPlan) 3項目を作成してください。
 5. 弱点克服・即時特訓問題 (remedialQuestion):
-   最も痛手を負ったトラップ (targetTrap) を1つ選び、300字前後のオリジナル評論文 (miniPassage) と4択問題を生成してください。正解 (isCorrect: true) はちょうど1つ、残りは生徒が引っかかったトラップと同型の選択肢にしてください。
+   最も痛手を負ったトラップ (targetTrap) を1つ選び、200字前後のオリジナル評論文 (miniPassage) と4択問題を生成してください。正解 (isCorrect: true) はちょうど1つ、残りは生徒が引っかかったトラップと同型の選択肢にしてください。
+
+【出力の簡潔さ】応答時間を短くするため、各コメント・解説・フィードバックは1〜2文（80字以内）に収め、長い引用や前置きは書かないでください。
 `;
 
 export interface ExamImagePart {
@@ -127,12 +131,22 @@ export interface ExamImagePart {
   data: string; // base64
 }
 
-/** 問題用紙＋答案の2枚を Gemini で照合診断する。失敗時は null。 */
+export type ExamAnalysisOutcome =
+  | { ok: true; data: ExamAnalysisResult }
+  | { ok: false; reason: 'timeout' | 'busy' | 'invalid' };
+
+/** 429（利用上限）/ 503（過負荷）など、時間をおけば通る上流エラーか */
+function isBusyError(err: unknown): boolean {
+  const status = (err as { status?: unknown } | null)?.status;
+  return status === 429 || status === 500 || status === 503 || status === 504;
+}
+
+/** 問題用紙＋答案の2枚を Gemini（Flash・思考なし）で照合診断する。失敗は理由つきで返す。 */
 export async function analyzeExamWithGemini(
   ai: GoogleGenAI,
   problem: ExamImagePart,
   answer: ExamImagePart,
-): Promise<ExamAnalysisResult | null> {
+): Promise<ExamAnalysisOutcome> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
   try {
@@ -156,13 +170,18 @@ export async function analyzeExamWithGemini(
         systemInstruction: EXAM_SYSTEM_PROMPT,
         responseMimeType: 'application/json',
         responseSchema: examDiagnosisResponseSchema,
-        temperature: 0.25,
+        temperature: 0.2,
+        // 思考ステップを使わず、出力量にも上限を設けて応答を速くする
+        thinkingConfig: { thinkingBudget: 0 },
+        maxOutputTokens: MAX_OUTPUT_TOKENS,
         abortSignal: controller.signal,
       },
     });
-    return parseExamDiagnosisJson(response.text);
-  } catch {
-    return null;
+    const data = parseExamDiagnosisJson(response.text);
+    return data ? { ok: true, data } : { ok: false, reason: 'invalid' };
+  } catch (err) {
+    if (controller.signal.aborted) return { ok: false, reason: 'timeout' };
+    return { ok: false, reason: isBusyError(err) ? 'busy' : 'invalid' };
   } finally {
     clearTimeout(timer);
   }

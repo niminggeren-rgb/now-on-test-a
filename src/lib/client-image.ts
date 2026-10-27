@@ -10,7 +10,23 @@ export interface PreparedImage {
 
 const MAX_EDGE = 1600;
 const WEBP_QUALITY = 0.8;
-const JPEG_QUALITY = 0.85;
+
+export interface ImageCompressionOptions {
+  /** 長辺の上限(px) */
+  maxEdge?: number;
+  /** WebP / JPEG の品質 0〜1 */
+  quality?: number;
+}
+
+/** 模試の答案診断用。Vercel のリクエスト上限(4.5MB)とモデルの処理時間を抑えるため、教材取り込みより小さくする。 */
+export const EXAM_UPLOAD_COMPRESSION: Required<ImageCompressionOptions> = { maxEdge: 1200, quality: 0.7 };
+
+/** 圧縮済みの画像を、FormData などで送れる File に戻す */
+export async function preparedImageToFile(img: PreparedImage, name: string): Promise<File> {
+  const blob = await (await fetch(img.base64Data)).blob();
+  const ext = img.mimeType === 'image/webp' ? 'webp' : 'jpg';
+  return new File([blob], `${name.replace(/\.[^.]+$/, '')}.${ext}`, { type: img.mimeType });
+}
 
 /** data URL 内の base64 から復号後のバイト数を概算する */
 function dataUrlBytes(dataUrl: string): number {
@@ -26,14 +42,16 @@ export function savedPercent(img: Pick<PreparedImage, 'originalBytes' | 'compres
 }
 
 /**
- * スマホ撮影の高解像度写真（4〜8MB）を、長辺1600pxの WebP（品質0.8）へ縮小して転送量と Vision トークンを減らす。
+ * スマホ撮影の高解像度写真（4〜8MB）を、長辺（既定1600px）の WebP（既定の品質0.8）へ縮小して転送量と Vision トークンを減らす。
  * WebP を書き出せないブラウザ（Safari 等は PNG にフォールバックする）では JPEG にする。
  * 形式（HEIC 等）をブラウザが復号できない場合は例外を投げる。
  */
-export async function prepareImageFile(file: File): Promise<PreparedImage> {
+export async function prepareImageFile(file: File, options: ImageCompressionOptions = {}): Promise<PreparedImage> {
+  const maxEdge = options.maxEdge ?? MAX_EDGE;
+  const quality = options.quality ?? WEBP_QUALITY;
   const bitmap = await createImageBitmap(file, { imageOrientation: 'from-image' });
   try {
-    const scale = Math.min(1, MAX_EDGE / Math.max(bitmap.width, bitmap.height));
+    const scale = Math.min(1, maxEdge / Math.max(bitmap.width, bitmap.height));
     const canvas = document.createElement('canvas');
     canvas.width = Math.max(1, Math.round(bitmap.width * scale));
     canvas.height = Math.max(1, Math.round(bitmap.height * scale));
@@ -46,10 +64,10 @@ export async function prepareImageFile(file: File): Promise<PreparedImage> {
     ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
 
     let mimeType: PreparedImage['mimeType'] = 'image/webp';
-    let dataUrl = canvas.toDataURL('image/webp', WEBP_QUALITY);
+    let dataUrl = canvas.toDataURL('image/webp', quality);
     if (!dataUrl.startsWith('data:image/webp')) {
       mimeType = 'image/jpeg';
-      dataUrl = canvas.toDataURL('image/jpeg', JPEG_QUALITY);
+      dataUrl = canvas.toDataURL('image/jpeg', quality);
     }
     return {
       id: `img-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
