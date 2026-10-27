@@ -30,3 +30,11 @@ export function getGeminiClient(): GoogleGenAI | null {
   const key = resolveGeminiKey();
   return key ? new GoogleGenAI({ apiKey: key.apiKey }) : null;
 }
+
+/** Gemini SDK のエラーを、画面とログに出せる短い説明にする（API キーらしき文字列は伏せる） */
+export function describeGeminiError(err: unknown): string {
+  const status = (err as { status?: unknown } | null)?.status;
+  const raw = err instanceof Error ? err.message : String(err);
+  const message = raw.replace(/AIza[0-9A-Za-z_-]{20,}/g, '***').slice(0, 300);
+  return `Gemini呼び出しエラー${typeof status === 'number' ? ` (HTTP ${status})` : ''}: ${message}`;
+}

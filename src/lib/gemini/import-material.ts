@@ -1,6 +1,6 @@
 import { Type, type GoogleGenAI, type Schema } from '@google/genai';
 import type { AllowedImageType } from '@/lib/exam-analysis';
-import { GEMINI_MODELS } from '@/lib/gemini/client';
+import { describeGeminiError, GEMINI_MODELS } from '@/lib/gemini/client';
 import { parseImportedMaterialJson } from '@/lib/import-material';
 import type { ImportedMaterial, TargetLevel } from '@/types/ai-pipeline';
 
@@ -154,8 +154,10 @@ export async function importMaterialWithGemini(
       },
     });
     return parseImportedMaterialJson(response.text);
-  } catch {
-    return null;
+  } catch (err) {
+    // 握りつぶさず、原因を呼び出し元（route の try/catch が 500 + error で返す）へ伝える
+    console.error('[import-material] Gemini error:', err);
+    throw new Error(controller.signal.aborted ? 'Geminiの応答がタイムアウトしました。もう一度お試しください。' : describeGeminiError(err));
   } finally {
     clearTimeout(timer);
   }
@@ -224,8 +226,10 @@ export async function generateMaterialFromText(
       },
     });
     return parseImportedMaterialJson(response.text);
-  } catch {
-    return null;
+  } catch (err) {
+    // 握りつぶさず、原因を呼び出し元（route の try/catch が 500 + error で返す）へ伝える
+    console.error('[import-material] Gemini error:', err);
+    throw new Error(controller.signal.aborted ? 'Geminiの応答がタイムアウトしました。もう一度お試しください。' : describeGeminiError(err));
   } finally {
     clearTimeout(timer);
   }
