@@ -14,6 +14,7 @@ const config: Config = {
         foreground: 'hsl(var(--foreground))',
         muted: 'hsl(var(--muted))',
         accent: 'hsl(var(--accent))',
+        brand: 'hsl(var(--brand-red))',
         ring: 'hsl(var(--accent))',
         trap: {
           overstatement: 'hsl(var(--trap-overstatement))',

@@ -7,6 +7,8 @@ import { TRAP_METADATA_MAP, type ActiveTrapType } from '@/types/domain';
 
 export const MAX_IMPORT_IMAGES = 6;
 export const MAX_IMPORT_IMAGE_BYTES = 4 * 1024 * 1024;
+export const MIN_PASTE_CHARS = 200;
+export const MAX_PASTE_CHARS = 8000;
 
 /** 取り込み用 AI のトラップID → 既存ドメインのトラップ種別 */
 export const AI_TRAP_TO_DOMAIN: Record<Exclude<TrapType, 'none'>, ActiveTrapType> = {
@@ -87,4 +89,25 @@ export function isPlayable(material: ImportedMaterial): boolean {
     material.questions.length > 0 &&
     material.questions.every((q) => q.choices.filter((c) => c.isCorrect).length === 1)
   );
+}
+
+/**
+ * テキストから AI が作問した教材に追加で課す条件（実物の取り込みと違い、選択肢の形を指定できるため）。
+ * 4択・正解1つ・誤答3つのトラップ分類が互いに異なること。
+ */
+export function validateGeneratedMaterial(material: ImportedMaterial): string[] {
+  const warnings: string[] = [];
+  for (const q of material.questions) {
+    if (q.choices.length !== 4) warnings.push(`${q.questionNumber}: 選択肢が${q.choices.length}個です（4択を想定）。`);
+    const wrong = q.choices.filter((c) => !c.isCorrect).map((c) => c.trapType);
+    if (new Set(wrong).size !== wrong.length) {
+      warnings.push(`${q.questionNumber}: 誤答のトラップ分類が重複しています。`);
+    }
+    for (const c of q.choices) {
+      if (!c.isCorrect && !c.slashSegments.some((s) => s.status === 'trap')) {
+        warnings.push(`${q.questionNumber} [${c.id}]: 誤答なのに傷（トラップ節）が指定されていません。`);
+      }
+    }
+  }
+  return warnings;
 }

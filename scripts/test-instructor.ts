@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { analyzeFocusTraps, generateTeachingSuggestion } from '../src/lib/instructor';
-import { MOCK_STUDENTS } from '../src/lib/mock-data/students';
+import { MOCK_STUDENTS } from './fixtures/students';
 
 assert.equal(MOCK_STUDENTS.length, 4);
 const byId = (id: string) => MOCK_STUDENTS.find((s) => s.id === id)!;

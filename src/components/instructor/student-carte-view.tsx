@@ -139,7 +139,7 @@ export function StudentCarteView({ students }: { students: readonly StudentRecor
   }
 
   if (!student || !suggestion) {
-    return <p className="mx-auto max-w-md rounded-lg border bg-surface p-8 text-center text-sm text-muted">担当生徒が登録されていません。</p>;
+    return <p className="mx-auto max-w-md rounded-lg border bg-surface p-8 text-center text-sm text-muted">担当生徒が登録されていません。生徒が実際に演習・受験したデータだけがここに表示されます。</p>;
   }
 
   const latestExam = [...student.exams].sort((a, b) => b.examDate.localeCompare(a.examDate))[0];

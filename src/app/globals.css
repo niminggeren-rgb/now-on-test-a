@@ -16,6 +16,7 @@
     --series-1: #3987e5;             /* blue */
     --series-2: #d95926;             /* orange */
 
+    --brand-red: 357 92% 47%;          /* 起動演出専用の赤（テーマ非依存） */
     --trap-overstatement: 347 91% 60%; /* rose-500 */
     --trap-causal: 38 92% 50%;         /* amber-500 */
     --trap-swap: 271 91% 65%;          /* purple-500 */

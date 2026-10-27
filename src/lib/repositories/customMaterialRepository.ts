@@ -3,8 +3,12 @@ import { clampDelta } from '@/lib/exam-diagnosis';
 import {
   ExamAnalysisSchema,
   ImportedMaterialSchema,
+  SourceTypeEnum,
+  TargetLevelEnum,
   type ExamAnalysisResult,
   type ImportedMaterial,
+  type SourceType,
+  type TargetLevel,
   type TrapType,
 } from '@/types/ai-pipeline';
 
@@ -19,7 +23,13 @@ const INSTRUCTOR_CARTE_KEY = 'lv_instructor_exam_advices';
 const MAX_STORED_MATERIALS = 30;
 const MAX_STORED_CARTES = 100;
 
-const storedMaterialSchema = ImportedMaterialSchema.extend({ id: z.string(), createdAt: z.string() });
+// sourceType / targetLevel は Phase 7 で追加。それ以前に保存された教材も読めるよう optional
+const storedMaterialSchema = ImportedMaterialSchema.extend({
+  id: z.string(),
+  createdAt: z.string(),
+  sourceType: SourceTypeEnum.optional(),
+  targetLevel: TargetLevelEnum.optional(),
+});
 const trapWeaknessSchema = z.object({
   overstatement: z.number(),
   causal_inversion: z.number(),
@@ -79,6 +89,16 @@ function write(key: string, value: unknown): boolean {
   }
 }
 
+/** custom_passages.id (UUID) とそのまま対応させるため、教材IDは UUID で採番する */
+function newMaterialId(): string {
+  const uuid = globalThis.crypto?.randomUUID?.();
+  return uuid ?? newId('custom');
+}
+
+export function isUuid(value: string): boolean {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value);
+}
+
 function newId(prefix: string): string {
   return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
 }
@@ -99,10 +119,14 @@ const clamp = (v: number) => Math.min(100, Math.max(0, Math.round(v)));
 
 export const customMaterialRepository = {
   /** 取り込んだ教材を保存して返す。保存できない環境（容量超過等）では null */
-  saveImportedMaterial(material: ImportedMaterial): StoredCustomMaterial | null {
+  saveImportedMaterial(
+    material: ImportedMaterial,
+    meta: { sourceType?: SourceType; targetLevel?: TargetLevel } = {},
+  ): StoredCustomMaterial | null {
     const record: StoredCustomMaterial = {
       ...material,
-      id: newId('custom'),
+      ...meta,
+      id: newMaterialId(),
       createdAt: new Date().toISOString(),
     };
     const list = [record, ...this.getAllImportedMaterials()].slice(0, MAX_STORED_MATERIALS);
@@ -114,12 +138,29 @@ export const customMaterialRepository = {
     const list = this.getAllImportedMaterials();
     const current = list.find((m) => m.id === id);
     if (!current) return null;
-    const record: StoredCustomMaterial = { ...material, id, createdAt: current.createdAt };
+    const record: StoredCustomMaterial = {
+      ...material,
+      sourceType: current.sourceType,
+      targetLevel: current.targetLevel,
+      id,
+      createdAt: current.createdAt,
+    };
     return write(CUSTOM_PASSAGES_KEY, list.map((m) => (m.id === id ? record : m))) ? record : null;
   },
 
   deleteImportedMaterial(id: string): void {
     write(CUSTOM_PASSAGES_KEY, this.getAllImportedMaterials().filter((m) => m.id !== id));
+  },
+
+  /** クラウドから取り込んだ教材をローカルのキャッシュへ（同じIDは上書き） */
+  mergeImportedMaterials(incoming: readonly StoredCustomMaterial[]): StoredCustomMaterial[] {
+    const byId = new Map(this.getAllImportedMaterials().map((m) => [m.id, m]));
+    for (const m of incoming) byId.set(m.id, m);
+    const merged = [...byId.values()]
+      .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+      .slice(0, MAX_STORED_MATERIALS);
+    write(CUSTOM_PASSAGES_KEY, merged);
+    return merged;
   },
 
   getAllImportedMaterials(): StoredCustomMaterial[] {
