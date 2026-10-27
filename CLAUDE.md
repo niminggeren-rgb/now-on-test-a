@@ -10,7 +10,7 @@
 - **UI Components:** shadcn/ui 方式 (Radix UI primitives を必要に応じて追加), Lucide React, Framer Motion
 - **Charts & Visualization:** Recharts (トラップ別弱点レーダーチャート、模試得点推移)
 - **Database / Auth / Storage:** Supabase (`@supabase/ssr`, `@supabase/supabase-js`)
-- **AI Integration:** Google GenAI SDK (`@google/genai` - `gemini-2.5-flash` for instant trap evaluation & OCR, `gemini-2.5-pro` for 400-char descriptive grading)
+- **AI Integration:** Google GenAI SDK (`@google/genai` - `gemini-3.8-flash` for instant trap evaluation & OCR, `gemini-3.1-pro-preview` for 400-char descriptive grading)
 - **State & Data Fetching:** TanStack Query v5 (`@tanstack/react-query`), Nuqs (URL state management; 必要になったフェーズで追加)
 - **Form & Validation:** React Hook Form, Zod v3 (`@hookform/resolvers/zod`)
 

@@ -1,8 +1,8 @@
 import { GoogleGenAI } from '@google/genai';
 
 export const GEMINI_MODELS = {
-  fast: 'gemini-2.5-flash',
-  pro: 'gemini-2.5-pro',
+  fast: 'gemini-3.8-flash',
+  pro: 'gemini-3.1-pro-preview',
 } as const;
 
 /** 受け付ける環境変数名（先頭が優先）。Vercel などの設定画面で別名を使っても動くようにする。 */
