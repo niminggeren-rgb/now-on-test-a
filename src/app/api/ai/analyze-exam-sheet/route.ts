@@ -57,7 +57,7 @@ export async function POST(request: NextRequest) {
     if (file.size > MAX_IMAGE_BYTES) return fail('画像が大きすぎます（1枚4MBまで）', 413);
     const bytes = new Uint8Array(await file.arrayBuffer());
     const type = detectImageType(bytes);
-    if (!type) return fail('PNG または JPG の画像のみアップロードできます', 400);
+    if (!type) return fail('PNG・JPEG・WebP の画像のみアップロードできます', 400);
     images.push({ mimeType: type, data: Buffer.from(bytes).toString('base64') });
   }
 

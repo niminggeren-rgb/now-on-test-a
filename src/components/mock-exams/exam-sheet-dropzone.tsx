@@ -3,13 +3,13 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { AlertTriangle, ImagePlus, Loader2, Save, Sparkles, X } from 'lucide-react';
 import {
-  ALLOWED_IMAGE_TYPES,
   examAnalysisSchema,
-  MAX_IMAGE_BYTES,
   MAX_IMAGES,
   toAnalysisSummary,
   type ExamAnalysis,
 } from '@/lib/exam-analysis';
+import { describeApiFailure } from '@/lib/api-error';
+import { EXAM_UPLOAD_COMPRESSION, prepareImageFile, preparedImageToFile } from '@/lib/client-image';
 import type { Repository } from '@/lib/repository';
 import { actionResultSchemaOf } from '@/lib/schemas';
 import { cn } from '@/lib/utils';
@@ -20,6 +20,9 @@ interface Picked {
   file: File;
   url: string;
 }
+
+/** 圧縮前の元画像に許す上限。送信前に縮小するので、サーバーの上限(4MB)より大きくてよい */
+const MAX_RAW_IMAGE_BYTES = 20 * 1024 * 1024;
 
 const responseSchema = actionResultSchemaOf(examAnalysisSchema);
 
@@ -61,10 +64,10 @@ export function ExamSheetDropzone({ repo, exams, weakTraps, onSaved }: ExamSheet
     const problems: string[] = [];
     const accepted: Picked[] = [];
     for (const file of incoming) {
-      if (!(ALLOWED_IMAGE_TYPES as readonly string[]).includes(file.type)) {
-        problems.push(`「${file.name}」は PNG / JPG ではありません`);
-      } else if (file.size > MAX_IMAGE_BYTES) {
-        problems.push(`「${file.name}」は4MBを超えています`);
+      if (!file.type.startsWith('image/')) {
+        problems.push(`「${file.name}」は画像ではありません`);
+      } else if (file.size > MAX_RAW_IMAGE_BYTES) {
+        problems.push(`「${file.name}」は20MBを超えています`);
       } else {
         const url = URL.createObjectURL(file);
         urlsRef.current.push(url);
@@ -109,12 +112,21 @@ export function ExamSheetDropzone({ repo, exams, weakTraps, onSaved }: ExamSheet
     setError('');
     setSavedMsg('');
     try {
+      // 送信前に長辺1200px・品質0.7へ縮小する（Vercel のリクエスト上限 4.5MB と処理時間の対策）
+      let compressed: File[];
+      try {
+        compressed = await Promise.all(picked.map(async (p) => preparedImageToFile(await prepareImageFile(p.file, EXAM_UPLOAD_COMPRESSION), p.file.name)));
+      } catch {
+        setError('この画像形式は読み込めませんでした。JPEG または PNG で撮影・保存してください。');
+        return;
+      }
       const form = new FormData();
-      for (const p of picked) form.append('files', p.file);
+      for (const f of compressed) form.append('files', f);
       if (weakTraps.length > 0) form.append('weakTraps', weakTraps.join(','));
       const res = await fetch('/api/ai/analyze-exam-sheet', { method: 'POST', body: form, signal: controller.signal });
-      const parsed = responseSchema.safeParse(await res.json().catch(() => null));
-      if (!parsed.success) setError('解析結果を受け取れませんでした。時間をおいて再度お試しください。');
+      const raw: unknown = await res.json().catch(() => null);
+      const parsed = responseSchema.safeParse(raw);
+      if (!parsed.success) setError(describeApiFailure(res.status, null));
       else if (!parsed.data.success) setError(parsed.data.error);
       else {
         setAnalysis(parsed.data.data);
@@ -162,7 +174,7 @@ export function ExamSheetDropzone({ repo, exams, weakTraps, onSaved }: ExamSheet
         <input
           type="file"
           multiple
-          accept={ALLOWED_IMAGE_TYPES.join(',')}
+          accept="image/*"
           data-testid="exam-file-input"
           className="sr-only"
           onChange={(e) => {

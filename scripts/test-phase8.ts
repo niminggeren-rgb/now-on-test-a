@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { OnDemandRequestSchema, Stage1TriageResponseSchema, Stage2InkSeparatedResponseSchema } from '../src/lib/ai/schemas/phase8Schemas';
-import { savedPercent } from '../src/lib/client-image';
+import { describeApiFailure } from '../src/lib/api-error';
+import { EXAM_UPLOAD_COMPRESSION, savedPercent } from '../src/lib/client-image';
 import { resolveGeminiKey } from '../src/lib/gemini/client';
 import { detectImageType } from '../src/lib/exam-analysis';
 import { evaluateReasoningMatch, type MatchQuestion } from '../src/lib/logic/reasoningMatcher';
@@ -76,5 +77,13 @@ assert.equal(resolveGeminiKey({ GEMINI_API_KEY: '   ' }), null);
 assert.deepEqual(resolveGeminiKey({ GEMINI_API_KEY: ' AIzaKey123\n' }), { apiKey: 'AIzaKey123', source: 'GEMINI_API_KEY' }, '前後の空白・改行を除く');
 assert.equal(resolveGeminiKey({ GEMINI_API_KEY: '"AIzaKey123"' })?.apiKey, 'AIzaKey123', '引用符を除く');
 assert.deepEqual(resolveGeminiKey({ GEMINI_API_KEY: 'your-x', GOOGLE_API_KEY: 'AIzaB' }), { apiKey: 'AIzaB', source: 'GOOGLE_API_KEY' }, '別名にフォールバック');
+
+// --- 失敗理由の表示（一律「ピントと明るさ」にしない）
+assert.deepEqual(EXAM_UPLOAD_COMPRESSION, { maxEdge: 1200, quality: 0.7 });
+assert.equal(describeApiFailure(504, null), '処理がタイムアウトしました。もう一度お試しください。', 'JSON でない 504 はタイムアウト');
+assert.equal(describeApiFailure(502, null), '処理がタイムアウトしました。もう一度お試しください。');
+assert.equal(describeApiFailure(413, null), '画像のサイズが大きすぎます。枚数を減らすか、別の写真でお試しください。');
+assert.equal(describeApiFailure(504, { success: false, error: '独自の理由' }), '独自の理由', 'サーバーの理由があればそれを優先');
+assert.ok(!describeApiFailure(500, null).includes('ピント'));
 
 console.log('test-phase8: all assertions passed');

@@ -106,7 +106,7 @@ export function ImportStudio() {
       return;
     }
     try {
-      const prepared = await Promise.all(picked.map(prepareImageFile));
+      const prepared = await Promise.all(picked.map((f) => prepareImageFile(f)));
       setImages((prev) => [...prev, ...prepared]);
     } catch {
       setError('この画像形式は読み込めませんでした。JPEG または PNG で撮影・保存してください。');
