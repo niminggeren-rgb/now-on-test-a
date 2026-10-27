@@ -1,11 +1,9 @@
 import { Type, type GoogleGenAI, type Schema } from '@google/genai';
 import type { AllowedImageType } from '@/lib/exam-analysis';
-import { describeGeminiError, GEMINI_MODELS } from '@/lib/gemini/client';
+import { thinkingConfigFor, withGeminiRetry, type RetryOutcome } from '@/lib/gemini/retry';
 import { parseImportedMaterialJson } from '@/lib/import-material';
 import type { ImportedMaterial, TargetLevel } from '@/types/ai-pipeline';
 
-const TIMEOUT_MS = 55_000;
-const GENERATE_TIMEOUT_MS = 55_000; // maxDuration(60秒) より前に自分で打ち切る
 
 const TRAP_ENUM = [
   'overstatement',
@@ -121,46 +119,50 @@ export interface ImportImagePart {
   data: string; // base64
 }
 
-export type ImportModel = keyof typeof GEMINI_MODELS;
 
-/** Gemini のマルチモーダルで教材画像を構造化する。失敗時は null。 */
+/** 再試行の結果を呼び出し元へ返す形にする。出力が読めなかった場合は null、それ以外の失敗は例外（route が理由つきで返す）。 */
+function unwrap(outcome: RetryOutcome<ImportedMaterial>): ImportedMaterial | null {
+  if (outcome.ok) return outcome.value;
+  if (outcome.reason === 'invalid') return null;
+  throw new Error(
+    outcome.reason === 'timeout'
+      ? `Geminiの応答がタイムアウトしました（${outcome.attempts}回試行）。もう一度お試しください。`
+      : `AIが混み合っています（${outcome.attempts}回試行）。${outcome.detail}`,
+  );
+}
+
+/** Gemini のマルチモーダルで教材画像を構造化する。混雑・タイムアウトは再試行する。出力が読めない場合は null。 */
 export async function importMaterialWithGemini(
   ai: GoogleGenAI,
   images: readonly ImportImagePart[],
-  model: ImportModel = 'fast',
 ): Promise<ImportedMaterial | null> {
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
-  try {
-    const response = await ai.models.generateContent({
-      model: GEMINI_MODELS[model],
-      contents: [
-        {
-          role: 'user',
-          parts: [
-            ...images.map((img) => ({ inlineData: { mimeType: img.mimeType, data: img.data } })),
-            {
-              text: 'この現代文教材の画像から本文・傍線部・設問・選択肢を抽出し、正解判定とトラップ分類・スラッシュ分割を付与した構造化JSONを生成してください。',
-            },
-          ],
+  return unwrap(
+    await withGeminiRetry(async (signal, model) => {
+      const response = await ai.models.generateContent({
+        model,
+        contents: [
+          {
+            role: 'user',
+            parts: [
+              ...images.map((img) => ({ inlineData: { mimeType: img.mimeType, data: img.data } })),
+              {
+                text: 'この現代文教材の画像から本文・傍線部・設問・選択肢を抽出し、正解判定とトラップ分類・スラッシュ分割を付与した構造化JSONを生成してください。',
+              },
+            ],
+          },
+        ],
+        config: {
+          systemInstruction: IMPORT_SYSTEM_PROMPT,
+          responseMimeType: 'application/json',
+          responseSchema: importMaterialResponseSchema,
+          temperature: 0.2,
+          ...thinkingConfigFor(model),
+          abortSignal: signal,
         },
-      ],
-      config: {
-        systemInstruction: IMPORT_SYSTEM_PROMPT,
-        responseMimeType: 'application/json',
-        responseSchema: importMaterialResponseSchema,
-        temperature: 0.2,
-        abortSignal: controller.signal,
-      },
-    });
-    return parseImportedMaterialJson(response.text);
-  } catch (err) {
-    // 握りつぶさず、原因を呼び出し元（route の try/catch が 500 + error で返す）へ伝える
-    console.error('[import-material] Gemini error:', err);
-    throw new Error(controller.signal.aborted ? 'Geminiの応答がタイムアウトしました。もう一度お試しください。' : describeGeminiError(err));
-  } finally {
-    clearTimeout(timer);
-  }
+      });
+      return parseImportedMaterialJson(response.text);
+    }),
+  );
 }
 
 const LEVEL_INSTRUCTIONS: Record<TargetLevel, string> = {
@@ -195,42 +197,36 @@ export const GENERATE_SYSTEM_PROMPT = `
 6. title は文章の主題を表す題、author は不明なら「出典不明（貼り付け教材）」とする。
 `;
 
-/** 貼り付けテキストから Gemini が作問する。失敗時は null。 */
+/** 貼り付けテキストから Gemini が作問する。混雑・タイムアウトは再試行する。出力が読めない場合は null。 */
 export async function generateMaterialFromText(
   ai: GoogleGenAI,
   rawText: string,
   targetLevel: TargetLevel,
-  model: ImportModel = 'pro',
 ): Promise<ImportedMaterial | null> {
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), GENERATE_TIMEOUT_MS);
-  try {
-    const response = await ai.models.generateContent({
-      model: GEMINI_MODELS[model],
-      contents: [
-        {
-          role: 'user',
-          parts: [
-            {
-              text: `難易度: ${LEVEL_INSTRUCTIONS[targetLevel]}\n\n以下の文章から入試問題を作問してください。\n\n【入力テキスト】\n${rawText}`,
-            },
-          ],
+  return unwrap(
+    await withGeminiRetry(async (signal, model) => {
+      const response = await ai.models.generateContent({
+        model,
+        contents: [
+          {
+            role: 'user',
+            parts: [
+              {
+                text: `難易度: ${LEVEL_INSTRUCTIONS[targetLevel]}\n\n以下の文章から入試問題を作問してください。\n\n【入力テキスト】\n${rawText}`,
+              },
+            ],
+          },
+        ],
+        config: {
+          systemInstruction: GENERATE_SYSTEM_PROMPT,
+          responseMimeType: 'application/json',
+          responseSchema: importMaterialResponseSchema,
+          temperature: 0.4,
+          ...thinkingConfigFor(model),
+          abortSignal: signal,
         },
-      ],
-      config: {
-        systemInstruction: GENERATE_SYSTEM_PROMPT,
-        responseMimeType: 'application/json',
-        responseSchema: importMaterialResponseSchema,
-        temperature: 0.4,
-        abortSignal: controller.signal,
-      },
-    });
-    return parseImportedMaterialJson(response.text);
-  } catch (err) {
-    // 握りつぶさず、原因を呼び出し元（route の try/catch が 500 + error で返す）へ伝える
-    console.error('[import-material] Gemini error:', err);
-    throw new Error(controller.signal.aborted ? 'Geminiの応答がタイムアウトしました。もう一度お試しください。' : describeGeminiError(err));
-  } finally {
-    clearTimeout(timer);
-  }
+      });
+      return parseImportedMaterialJson(response.text);
+    }),
+  );
 }

@@ -16,7 +16,8 @@ import type { ActionResult } from '@/types/action';
 import { TargetLevelEnum, type ImportedMaterial } from '@/types/ai-pipeline';
 
 export const runtime = 'nodejs';
-export const maxDuration = 60;
+// 混雑時の再試行を含めて数分かかり得るため長めに確保（Vercel のプラン上限が低い場合は、その上限に合わせて下げる）
+export const maxDuration = 300;
 
 const MAX_BODY_BYTES = Math.ceil((MAX_IMPORT_IMAGES * MAX_IMPORT_IMAGE_BYTES * 4) / 3) + 512 * 1024;
 const rateLimited = createRateLimiter(5);
@@ -92,7 +93,7 @@ async function handle(request: NextRequest) {
     images.push({ mimeType: type, data: base64 });
   }
 
-  const material = await importMaterialWithGemini(ai, images, parsed.data.modelPreference);
+  const material = await importMaterialWithGemini(ai, images);
   if (!material) {
     return fail('教材を読み取れませんでした。ピントと明るさを確認し、もう一度撮影してください。', 502);
   }

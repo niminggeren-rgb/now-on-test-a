@@ -19,7 +19,7 @@ import {
 import type { ClassifyAndOcrResult } from '@/app/api/ai/classify-and-ocr/route';
 import { useAiStatus } from '@/hooks/use-ai-status';
 import { buildTraceLogs } from '@/lib/analytics/ocrTraces';
-import { prepareImageFile, savedPercent } from '@/lib/client-image';
+import { EXAM_UPLOAD_COMPRESSION, prepareImageFile, savedPercent } from '@/lib/client-image';
 import { MAX_IMPORT_IMAGES } from '@/lib/import-material';
 import { protocolRepository } from '@/lib/repositories/protocolRepository';
 import { cn } from '@/lib/utils';
@@ -85,7 +85,7 @@ export function ImageWorkbench({ onCommit }: ImageWorkbenchProps) {
     setError(null);
     setCommitted(null);
     try {
-      const prepared = await Promise.all(files.map((f) => prepareImageFile(f)));
+      const prepared = await Promise.all(files.map((f) => prepareImageFile(f, EXAM_UPLOAD_COMPRESSION)));
       const res = await fetch('/api/ai/classify-and-ocr', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

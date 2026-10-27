@@ -409,7 +409,7 @@ export function ImportStudio() {
               />
             ))}
           </div>
-          <p className="text-xs text-muted">通常15〜60秒ほどかかります。このままお待ちください。</p>
+          <p className="text-xs text-muted">通常は数十秒、AIが混み合っているときは自動で再試行するため数分かかることがあります。このままお待ちください。</p>
         </div>
       )}
 
