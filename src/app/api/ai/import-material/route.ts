@@ -16,7 +16,7 @@ import type { ActionResult } from '@/types/action';
 import { TargetLevelEnum, type ImportedMaterial } from '@/types/ai-pipeline';
 
 export const runtime = 'nodejs';
-export const maxDuration = 120;
+export const maxDuration = 60;
 
 const MAX_BODY_BYTES = Math.ceil((MAX_IMPORT_IMAGES * MAX_IMPORT_IMAGE_BYTES * 4) / 3) + 512 * 1024;
 const rateLimited = createRateLimiter(5);
@@ -44,7 +44,7 @@ function fail(error: string, status: number) {
   return NextResponse.json(body, { status });
 }
 
-export async function POST(request: NextRequest) {
+async function handle(request: NextRequest) {
   if (rateLimited(clientKey(request.headers))) {
     return fail('リクエストが多すぎます。しばらく待ってから再度お試しください。', 429);
   }
@@ -98,4 +98,16 @@ export async function POST(request: NextRequest) {
   }
   const body: ActionResult<ImportedMaterial> = { success: true, data: material };
   return NextResponse.json(body);
+}
+
+export async function POST(request: NextRequest) {
+  try {
+    return await handle(request);
+  } catch (error: unknown) {
+    // 未処理の例外で関数ごと落ちて 502 になるのを防ぎ、原因を画面に返す
+    return NextResponse.json(
+      { success: false, error: error instanceof Error ? error.message || 'Unknown error' : 'Unknown error' },
+      { status: 500 },
+    );
+  }
 }
