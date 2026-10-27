@@ -5,12 +5,28 @@ export const GEMINI_MODELS = {
   pro: 'gemini-2.5-pro',
 } as const;
 
+/** 受け付ける環境変数名（先頭が優先）。Vercel などの設定画面で別名を使っても動くようにする。 */
+export const GEMINI_KEY_ENV_NAMES = ['GEMINI_API_KEY', 'GOOGLE_GENERATIVE_AI_API_KEY', 'GOOGLE_API_KEY'] as const;
+
+/** 設定画面からのコピペで紛れ込みやすい前後の空白・改行・引用符を除く */
+function cleanKey(raw: string | undefined): string {
+  return (raw ?? '').trim().replace(/^(['"])(.*)\1$/s, '$2').trim();
+}
+
+/** 有効なキーとその変数名。未設定、またはサンプルの値（your-…）のままなら null。 */
+export function resolveGeminiKey(env: Record<string, string | undefined> = process.env): { apiKey: string; source: string } | null {
+  for (const name of GEMINI_KEY_ENV_NAMES) {
+    const apiKey = cleanKey(env[name]);
+    if (apiKey && !apiKey.startsWith('your-')) return { apiKey, source: name };
+  }
+  return null;
+}
+
 /**
- * サーバー専用。GEMINI_API_KEY が未設定の場合は null を返し、
+ * サーバー専用。キーが未設定の場合は null を返し、
  * 呼び出し側はローカル採点/シミュレーションにフォールバックする。
  */
 export function getGeminiClient(): GoogleGenAI | null {
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey || apiKey.startsWith('your-')) return null;
-  return new GoogleGenAI({ apiKey });
+  const key = resolveGeminiKey();
+  return key ? new GoogleGenAI({ apiKey: key.apiKey }) : null;
 }
