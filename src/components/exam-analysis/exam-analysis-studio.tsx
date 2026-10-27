@@ -39,7 +39,6 @@ function UploadSlot({ index, title, hint, icon: Icon, image, onFile }: SlotProps
       <input
         type="file"
         accept="image/*"
-        capture="environment"
         className="sr-only"
         onChange={(e) => {
           const file = e.target.files?.[0];

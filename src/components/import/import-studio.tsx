@@ -14,6 +14,8 @@ import {
   Trash2,
   Upload,
 } from 'lucide-react';
+import { AiUnavailableNotice } from '@/components/common/ai-unavailable-notice';
+import { useAiStatus } from '@/hooks/use-ai-status';
 import { prepareImageFile, savedPercent, type PreparedImage } from '@/lib/client-image';
 import {
   isPlayable,
@@ -57,6 +59,8 @@ const LOADING_MESSAGES: Record<InputTab, string[]> = {
 
 export function ImportStudio() {
   const router = useRouter();
+  const aiStatus = useAiStatus();
+  const aiReady = aiStatus?.gemini !== false; // 確認中・確認失敗のときは止めない
   const [studioTab, setStudioTab] = useState<StudioTab>('text');
   const tab: InputTab = studioTab === 'workbench' ? 'text' : studioTab;
   const setTab = (value: StudioTab) => setStudioTab(value);
@@ -190,7 +194,7 @@ export function ImportStudio() {
   );
 
   const generateLabel = tab === 'text' ? 'AIで問題を生成する' : 'AIで教材を構造化・問題化する';
-  const canGenerate = tab === 'text' ? textReady : images.length > 0;
+  const canGenerate = aiReady && (tab === 'text' ? textReady : images.length > 0);
 
   return (
     <div className="mx-auto max-w-6xl space-y-6">
@@ -214,6 +218,7 @@ export function ImportStudio() {
               {tabButton('workbench', '答案ワークベンチ', Scissors)}
             </div>
 
+            <AiUnavailableNotice status={aiStatus} />
             {studioTab === 'workbench' ? (
               <ImageWorkbench />
             ) : (
@@ -268,7 +273,6 @@ export function ImportStudio() {
                     ref={fileInputRef}
                     type="file"
                     accept="image/*"
-                    capture="environment"
                     multiple
                     onChange={(e) => void handleFilesSelected(e.target.files)}
                     className="hidden"

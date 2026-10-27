@@ -17,6 +17,7 @@ import {
   Upload,
 } from 'lucide-react';
 import type { ClassifyAndOcrResult } from '@/app/api/ai/classify-and-ocr/route';
+import { useAiStatus } from '@/hooks/use-ai-status';
 import { buildTraceLogs } from '@/lib/analytics/ocrTraces';
 import { prepareImageFile, savedPercent } from '@/lib/client-image';
 import { MAX_IMPORT_IMAGES } from '@/lib/import-material';
@@ -62,6 +63,7 @@ interface ImageWorkbenchProps {
 /** 教材・答案の写真をまとめて AI で仕分けし、鉛筆（自力）と赤ペン（丸付け）の痕跡を Step 4 のログとして確認・登録する */
 export function ImageWorkbench({ onCommit }: ImageWorkbenchProps) {
   const fileRef = useRef<HTMLInputElement>(null);
+  const aiStatus = useAiStatus();
   const [pages, setPages] = useState<WorkbenchPage[]>([]);
   const [traces, setTraces] = useState<StudentStep4TraceLog[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -175,13 +177,13 @@ export function ImageWorkbench({ onCommit }: ImageWorkbenchProps) {
         <button
           type="button"
           onClick={() => fileRef.current?.click()}
-          disabled={busy}
+          disabled={busy || aiStatus?.gemini === false}
           className="flex min-h-11 shrink-0 items-center gap-2 rounded-lg bg-accent px-4 text-xs font-bold text-white disabled:opacity-50"
         >
           <Upload className="h-4 w-4" aria-hidden />
           {busy ? 'AI仕分け・OCR実行中…' : '画像を選択して解析'}
         </button>
-        <input ref={fileRef} type="file" accept="image/*" capture="environment" multiple onChange={(e) => void handleFiles(e)} className="hidden" />
+        <input ref={fileRef} type="file" accept="image/*" multiple onChange={(e) => void handleFiles(e)} className="hidden" />
       </div>
 
       {error && (

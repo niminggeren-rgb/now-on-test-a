@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { OnDemandRequestSchema, Stage1TriageResponseSchema, Stage2InkSeparatedResponseSchema } from '../src/lib/ai/schemas/phase8Schemas';
 import { savedPercent } from '../src/lib/client-image';
+import { resolveGeminiKey } from '../src/lib/gemini/client';
 import { detectImageType } from '../src/lib/exam-analysis';
 import { evaluateReasoningMatch, type MatchQuestion } from '../src/lib/logic/reasoningMatcher';
 
@@ -67,5 +68,13 @@ assert.ok(!Stage1TriageResponseSchema.safeParse({ items: [{ imageIndex: 0, image
 assert.ok(!Stage2InkSeparatedResponseSchema.safeParse({ passageTitle: null, passageAuthor: null, consolidatedPassageText: '', questions: [{ questionNumberLabel: '問1', questionPrompt: '', underlinedTargetText: null, studentInitialSelectedOption: null, officialCorrectOption: 1, blackPencilTraces: [{ optionNumber: 1, isEliminatedBySlash: true, underlinedOrCrossedPhrases: [], inferredStudentTrapReason: 'LOCAL_CONTRADICTION' }], redBluePenGrading: { gradingMark: 'NONE', correctedOptionNumber: null, redPenNotes: [] }, choices: [] }] }).success, '未知のトラップ名・選択肢0は拒否');
 assert.ok(!OnDemandRequestSchema.safeParse({ mode: 'THINKING_PROCESS', passageText: '   ' }).success);
 assert.equal(OnDemandRequestSchema.parse({ mode: 'THINKING_PROCESS', passageText: '本文' }).questionPrompt, '');
+
+// --- Gemini キーの解決（Vercel の設定画面での貼り付けミスに強い）
+assert.equal(resolveGeminiKey({}), null);
+assert.equal(resolveGeminiKey({ GEMINI_API_KEY: 'your-google-genai-api-key' }), null, 'サンプル値は未設定扱い');
+assert.equal(resolveGeminiKey({ GEMINI_API_KEY: '   ' }), null);
+assert.deepEqual(resolveGeminiKey({ GEMINI_API_KEY: ' AIzaKey123\n' }), { apiKey: 'AIzaKey123', source: 'GEMINI_API_KEY' }, '前後の空白・改行を除く');
+assert.equal(resolveGeminiKey({ GEMINI_API_KEY: '"AIzaKey123"' })?.apiKey, 'AIzaKey123', '引用符を除く');
+assert.deepEqual(resolveGeminiKey({ GEMINI_API_KEY: 'your-x', GOOGLE_API_KEY: 'AIzaB' }), { apiKey: 'AIzaB', source: 'GOOGLE_API_KEY' }, '別名にフォールバック');
 
 console.log('test-phase8: all assertions passed');
