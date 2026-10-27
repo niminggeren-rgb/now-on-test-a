@@ -13,7 +13,7 @@ import {
   Trash2,
   Upload,
 } from 'lucide-react';
-import { prepareImageFile, type PreparedImage } from '@/lib/client-image';
+import { prepareImageFile, savedPercent, type PreparedImage } from '@/lib/client-image';
 import {
   isPlayable,
   MAX_IMPORT_IMAGES,
@@ -276,7 +276,16 @@ export function ImportStudio() {
                 {images.length > 0 && (
                   <div>
                     <div className="mb-3 flex items-center justify-between">
-                      <h3 className="text-sm font-bold">取り込み対象ページ ({images.length}枚)</h3>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <h3 className="text-sm font-bold">取り込み対象ページ ({images.length}枚)</h3>
+                        <span className="rounded border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 font-mono text-[10px] text-emerald-400">
+                          {savedPercent({
+                            originalBytes: images.reduce((n, i) => n + i.originalBytes, 0),
+                            compressedBytes: images.reduce((n, i) => n + i.compressedBytes, 0),
+                          })}
+                          %削減 ({images[0]?.mimeType === 'image/webp' ? 'WebP' : 'JPEG'} 1600px)
+                        </span>
+                      </div>
                       <button
                         type="button"
                         onClick={() => setImages([])}

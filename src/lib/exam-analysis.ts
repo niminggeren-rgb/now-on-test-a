@@ -4,7 +4,7 @@ import { TRAP_METADATA_MAP, type ActiveTrapType } from '@/types/domain';
 
 export const MAX_IMAGES = 3;
 export const MAX_IMAGE_BYTES = 4 * 1024 * 1024;
-export const ALLOWED_IMAGE_TYPES = ['image/png', 'image/jpeg'] as const;
+export const ALLOWED_IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/webp'] as const;
 export type AllowedImageType = (typeof ALLOWED_IMAGE_TYPES)[number];
 
 /** 拡張子や Content-Type ではなく先頭バイト（マジックナンバー）で画像形式を判定する。 */
@@ -17,6 +17,14 @@ export function detectImageType(bytes: Uint8Array): AllowedImageType | null {
     return 'image/png';
   }
   if (bytes.length >= 3 && bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff) return 'image/jpeg';
+  // WebP: "RIFF" <size> "WEBP"
+  if (
+    bytes.length >= 12 &&
+    bytes[0] === 0x52 && bytes[1] === 0x49 && bytes[2] === 0x46 && bytes[3] === 0x46 &&
+    bytes[8] === 0x57 && bytes[9] === 0x45 && bytes[10] === 0x42 && bytes[11] === 0x50
+  ) {
+    return 'image/webp';
+  }
   return null;
 }
 

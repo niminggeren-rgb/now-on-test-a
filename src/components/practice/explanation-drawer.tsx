@@ -1,19 +1,25 @@
 'use client';
 
+import { useMemo } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
 import { ArrowRight, CheckCircle2, XCircle } from 'lucide-react';
+import { evaluateReasoningMatch } from '@/lib/logic/reasoningMatcher';
 import type { SubmitAnswerResult } from '@/lib/repository';
 import { cn } from '@/lib/utils';
 import { TRAP_METADATA_MAP } from '@/types/domain';
+import { OnDemandExplanation } from './on-demand-explanation';
+import { ReasoningMatchPanel } from './reasoning-match-panel';
 
 interface ExplanationDrawerProps {
   result: SubmitAnswerResult;
   timeLabel: string;
   isLast: boolean;
+  /** オンデマンド解説に渡す本文全体 */
+  passageText: string;
   onNext: () => void;
 }
 
-export function ExplanationDrawer({ result, timeLabel, isLast, onNext }: ExplanationDrawerProps) {
+export function ExplanationDrawer({ result, timeLabel, isLast, passageText, onNext }: ExplanationDrawerProps) {
   const reduce = useReducedMotion();
   const { log, question, stats, synced } = result;
   const matches = Object.values(log.eliminationTrace).filter((t) => t.isTrapMatch).length;
@@ -22,6 +28,38 @@ export function ExplanationDrawer({ result, timeLabel, isLast, onNext }: Explana
     ? TRAP_METADATA_MAP[trapped.primaryTrapType]
     : null;
   const trappedStat = trappedMeta ? stats.find((s) => s.trapType === trappedMeta.type) : undefined;
+
+  const match = useMemo(
+    () =>
+      evaluateReasoningMatch(
+        {
+          questionNumberLabel: `問${question.questionNumber}`,
+          officialCorrectOption: question.correctChoiceLabel ?? 0,
+          choices: question.choices.map((c) => ({
+            optionNumber: c.choiceLabel,
+            isCorrectAnswer: c.isCorrect,
+            actualTrapTypes: c.primaryTrapType === 'NONE' ? [] : [c.primaryTrapType],
+            flawSpan: c.flawSegmentText,
+          })),
+        },
+        log.selectedChoiceLabel,
+        Object.entries(log.eliminationTrace)
+          .filter(([, t]) => t.eliminated)
+          .map(([label, t]) => ({ optionNumber: Number(label), selectedTrapType: t.userTaggedTrap, markedFlawText: t.slashedSegment })),
+      ),
+    [question, log],
+  );
+  const explanationChoices = useMemo(
+    () =>
+      question.choices.map((c) => ({
+        optionNumber: c.choiceLabel,
+        text: c.content,
+        isCorrect: c.isCorrect,
+        trapType: c.primaryTrapType === 'NONE' ? null : c.primaryTrapType,
+        flawText: c.flawSegmentText,
+      })),
+    [question],
+  );
 
   return (
     <motion.section
@@ -56,6 +94,8 @@ export function ExplanationDrawer({ result, timeLabel, isLast, onNext }: Explana
         </p>
       )}
 
+      <ReasoningMatchPanel summary={match} />
+
       <p className="mt-3 text-sm leading-relaxed">{question.explanationSummary}</p>
 
       <ol className="mt-3 space-y-2">
@@ -71,6 +111,8 @@ export function ExplanationDrawer({ result, timeLabel, isLast, onNext }: Explana
           </li>
         ))}
       </ol>
+
+      <OnDemandExplanation passageText={passageText} questionPrompt={question.promptText} choices={explanationChoices} />
 
       <button
         type="button"
