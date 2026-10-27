@@ -1,9 +1,20 @@
 import { GoogleGenAI } from '@google/genai';
 
+const DEFAULT_MODEL = 'gemini-3.8-flash';
+
+/** 使用モデル。クォータ(429)対策で Pro は使わず、環境変数 GEMINI_MODEL があればそれを、無ければ軽量の Flash を使う。 */
+function modelName(): string {
+  return process.env.GEMINI_MODEL?.trim() || DEFAULT_MODEL;
+}
+
 export const GEMINI_MODELS = {
-  fast: 'gemini-3.8-flash',
-  pro: 'gemini-3.1-pro-preview',
-} as const;
+  get fast(): string {
+    return modelName();
+  },
+  get pro(): string {
+    return modelName();
+  },
+};
 
 /** 受け付ける環境変数名（先頭が優先）。Vercel などの設定画面で別名を使っても動くようにする。 */
 export const GEMINI_KEY_ENV_NAMES = ['GEMINI_API_KEY', 'GOOGLE_GENERATIVE_AI_API_KEY', 'GOOGLE_API_KEY'] as const;
