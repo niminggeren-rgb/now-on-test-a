@@ -16,7 +16,8 @@ import {
 } from 'lucide-react';
 import { AiUnavailableNotice } from '@/components/common/ai-unavailable-notice';
 import { useAiStatus } from '@/hooks/use-ai-status';
-import { prepareImageFile, savedPercent, type PreparedImage } from '@/lib/client-image';
+import { describeApiFailure } from '@/lib/api-error';
+import { EXAM_UPLOAD_COMPRESSION, prepareImageFile, savedPercent, type PreparedImage } from '@/lib/client-image';
 import {
   isPlayable,
   MAX_IMPORT_IMAGES,
@@ -106,7 +107,7 @@ export function ImportStudio() {
       return;
     }
     try {
-      const prepared = await Promise.all(picked.map((f) => prepareImageFile(f)));
+      const prepared = await Promise.all(picked.map((f) => prepareImageFile(f, EXAM_UPLOAD_COMPRESSION)));
       setImages((prev) => [...prev, ...prepared]);
     } catch {
       setError('この画像形式は読み込めませんでした。JPEG または PNG で撮影・保存してください。');
@@ -140,7 +141,7 @@ export function ImportStudio() {
       });
       const json = (await res.json().catch(() => null)) as ActionResult<ImportedMaterial> | null;
       if (!json || !json.success) {
-        throw new Error(json && !json.success ? json.error : '教材の生成に失敗しました。');
+        throw new Error(describeApiFailure(res.status, json));
       }
       setMaterial(json.data);
       setSourceType(source);

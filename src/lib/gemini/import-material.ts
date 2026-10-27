@@ -5,7 +5,7 @@ import { parseImportedMaterialJson } from '@/lib/import-material';
 import type { ImportedMaterial, TargetLevel } from '@/types/ai-pipeline';
 
 const TIMEOUT_MS = 55_000;
-const GENERATE_TIMEOUT_MS = 100_000;
+const GENERATE_TIMEOUT_MS = 55_000; // maxDuration(60秒) より前に自分で打ち切る
 
 const TRAP_ENUM = [
   'overstatement',
