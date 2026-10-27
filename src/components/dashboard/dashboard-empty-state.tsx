@@ -20,9 +20,9 @@ export function DashboardEmptyState({ startHref }: { startHref: string }) {
       </span>
       <h2 className="mt-5 text-lg font-semibold tracking-tight">演習履歴がありません</h2>
       <p className="mt-2 max-w-md text-sm leading-relaxed text-muted">
-        まずは1問解いてみましょう。解いた記録から、あなたが引っかかりやすいトラップと
+        まずは問題を1問解くか、教材を取り込んでみましょう。実際に解いた記録だけから、
         <wbr />
-        論理消去の精度をここに分析します。
+        引っかかりやすいトラップと論理消去の精度を0から積み上げて分析します。
       </p>
 
       <div className="mt-6 flex flex-wrap justify-center gap-3">
@@ -32,6 +32,9 @@ export function DashboardEmptyState({ startHref }: { startHref: string }) {
         >
           最初の1問を解く
           <ArrowRight className="h-4 w-4" aria-hidden />
+        </Link>
+        <Link href="/import" className="inline-flex items-center rounded-md border px-5 py-2.5 text-sm hover:bg-foreground/5">
+          教材を取り込む
         </Link>
         <Link href="/practice" className="inline-flex items-center rounded-md border px-5 py-2.5 text-sm hover:bg-foreground/5">
           問題一覧を見る

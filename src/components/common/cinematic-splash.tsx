@@ -2,12 +2,24 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
-import { FastForward, Sparkles, Volume2 } from 'lucide-react';
 import { cinematicSound } from '@/lib/sound/cinematic';
 
 const SPLASH_STORAGE_KEY = 'lv_cinematic_splash_date';
-const ZOOM_AT_MS = 2600;
-const END_AT_MS = 3400;
+const ZOOM_AT_MS = 2300;
+const END_AT_MS = 3000;
+
+/** 光の筋の本数。位置・角度・遅延は添字から決めるので描画ごとに値が変わらない。 */
+const RIBBONS = Array.from({ length: 21 }, (_, i) => {
+  const t = (i - 10) / 10; // -1 〜 1
+  return {
+    id: i,
+    spread: t * 62, // vw: 中心から左右へ広がる到達位置
+    tilt: t * 14, // deg: 扇状に傾ける
+    width: 2 + ((i * 7) % 5) * 3, // px
+    delay: Math.abs(t) * 0.35 + (i % 3) * 0.04,
+    strength: 0.8 + ((i * 5) % 4) * 0.07,
+  };
+});
 
 /** ローカル日付 (YYYY-MM-DD)。UTC だと日本時間の朝9時前に日付が切り替わってしまうため使わない。 */
 export function getTodayKey(date = new Date()): string {
@@ -38,11 +50,14 @@ interface CinematicSplashProps {
   onComplete?: () => void;
 }
 
+/**
+ * 起動演出。純黒の画面にロゴとタグラインだけを置き、画面のどこをタップしても
+ * サウンドと光の筋が奥から手前へ弾けてダッシュボードへ遷移する。
+ */
 export function CinematicSplash({ forceShow = false, onComplete }: CinematicSplashProps) {
   const reduceMotion = useReducedMotion();
   const [shouldRender, setShouldRender] = useState(false);
-  const [hasStarted, setHasStarted] = useState(false);
-  const [phase, setPhase] = useState<'waiting' | 'playing' | 'zoomOut'>('waiting');
+  const [phase, setPhase] = useState<'idle' | 'burst' | 'zoomOut'>('idle');
   const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
   const onCompleteRef = useRef(onComplete);
   onCompleteRef.current = onComplete;
@@ -78,160 +93,112 @@ export function CinematicSplash({ forceShow = false, onComplete }: CinematicSpla
     onCompleteRef.current?.();
   }, [clearTimers]);
 
-  // AudioContext は必ずユーザー操作（クリック）の中で生成・再生する
-  const startSequence = useCallback(() => {
-    if (hasStarted) return;
-    setHasStarted(true);
-    setPhase('playing');
+  // AudioContext は必ずユーザー操作（タップ）の中で生成・再生する
+  const handleTap = useCallback(() => {
+    if (phase !== 'idle') {
+      finishSplash();
+      return;
+    }
+    setPhase('burst');
     cinematicSound.playCinematicStrike();
     timers.current.push(setTimeout(() => setPhase('zoomOut'), ZOOM_AT_MS));
     timers.current.push(setTimeout(finishSplash, END_AT_MS));
-  }, [hasStarted, finishSplash]);
+  }, [phase, finishSplash]);
 
   useEffect(() => {
     if (!shouldRender) return;
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') finishSplash();
+      else if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        handleTap();
+      }
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [shouldRender, finishSplash]);
+  }, [shouldRender, finishSplash, handleTap]);
+
+  const bursting = phase !== 'idle';
 
   return (
     <AnimatePresence>
       {shouldRender && (
         <motion.div
           key="cinematic-splash-backdrop"
-          role="dialog"
-          aria-modal="true"
-          aria-label="起動演出"
+          role="button"
+          tabIndex={0}
+          aria-label="国語読解、成績向上。 画面をタップして開始"
           initial={{ opacity: 1 }}
-          exit={{ opacity: 0, transition: { duration: 0.45, ease: 'easeInOut' } }}
-          onClick={hasStarted ? finishSplash : startSequence}
-          className="fixed inset-0 z-[9999] flex cursor-pointer select-none flex-col items-center justify-center overflow-hidden bg-black text-white"
+          exit={{ opacity: 0, transition: { duration: 0.5, ease: 'easeInOut' } }}
+          onClick={handleTap}
+          className="fixed inset-0 z-[9999] flex cursor-pointer select-none items-center justify-center overflow-hidden bg-black text-white outline-none"
+          style={{ perspective: 900 }}
         >
-          {/* 背景のアンビエント光彩 */}
+          {/* 奥から手前へ弾ける光の筋 */}
+          {bursting &&
+            RIBBONS.map((r) => (
+              <motion.span
+                key={r.id}
+                aria-hidden
+                initial={{ x: 0, scaleX: 0.2, scaleY: 0.05, opacity: 0, rotate: 0, z: -600 }}
+                animate={{
+                  x: [`0vw`, `${r.spread}vw`, `${r.spread * 1.7}vw`],
+                  scaleX: [0.2, 1, 2.4],
+                  scaleY: [0.05, 1, 1.4],
+                  opacity: [0, r.strength, 0],
+                  rotate: [0, r.tilt, r.tilt * 1.4],
+                  z: [-600, 0, 380],
+                }}
+                transition={{ duration: 2.1, delay: r.delay, times: [0, 0.45, 1], ease: [0.22, 1, 0.36, 1] }}
+                className="pointer-events-none absolute top-1/2 left-1/2 h-[150vh] -translate-x-1/2 -translate-y-1/2 rounded-full bg-gradient-to-b from-transparent via-brand to-transparent blur-[2px]"
+                style={{ width: r.width }}
+              />
+            ))}
+
+          {/* 奥の光彩 */}
           <motion.div
-            initial={{ opacity: 0, scale: 0.5 }}
+            aria-hidden
+            initial={{ opacity: 0, scale: 0.3 }}
             animate={
-              phase === 'playing'
-                ? { opacity: [0, 0.65, 0.35], scale: [0.6, 1.35, 1.6] }
-                : phase === 'zoomOut'
-                  ? { opacity: 0, scale: 3.0 }
-                  : { opacity: 0.15, scale: 0.9 }
+              phase === 'idle'
+                ? { opacity: 0, scale: 0.3 }
+                : phase === 'burst'
+                  ? { opacity: [0, 0.9, 0.5], scale: [0.3, 1.5, 2.2] }
+                  : { opacity: 0, scale: 4 }
             }
-            transition={{ duration: 2.6, ease: 'easeOut' }}
-            className="pointer-events-none absolute h-[420px] w-[420px] rounded-full bg-gradient-to-tr from-trap-overstatement/40 via-trap-overstatement/25 to-accent/30 blur-[110px]"
+            transition={{ duration: phase === 'zoomOut' ? 0.7 : 1.8, ease: 'easeOut' }}
+            className="pointer-events-none absolute h-[60vmin] w-[60vmin] rounded-full bg-brand/60 blur-[120px]"
           />
 
-          {/* 水平レーザーフレア */}
-          {hasStarted && (
-            <motion.div
-              initial={{ width: '0%', opacity: 0 }}
-              animate={
-                phase === 'playing'
-                  ? { width: ['0%', '85%', '60%'], opacity: [0, 1, 0.3] }
-                  : { width: '120%', opacity: 0 }
-              }
-              transition={{ duration: 1.8, ease: 'circOut', delay: 0.25 }}
-              className="pointer-events-none absolute h-[2px] bg-gradient-to-r from-transparent via-trap-overstatement to-transparent shadow-[0_0_25px_hsl(var(--trap-overstatement))]"
-            />
-          )}
-
-          {!hasStarted ? (
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="relative z-10 flex flex-col items-center gap-6 px-6 text-center"
+          {/* ロゴ + タグライン */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.94 }}
+            animate={
+              phase === 'idle'
+                ? { opacity: [0.55, 1, 0.55], scale: 1 }
+                : phase === 'burst'
+                  ? { opacity: 1, scale: [1, 1.06] }
+                  : { opacity: 0, scale: 16, filter: 'blur(10px)' }
+            }
+            transition={
+              phase === 'idle'
+                ? { duration: 2.8, repeat: Infinity, ease: 'easeInOut' }
+                : phase === 'burst'
+                  ? { duration: 2.3, ease: [0.16, 1, 0.3, 1] }
+                  : { duration: 0.7, ease: 'easeIn' }
+            }
+            className="relative z-10 flex flex-col items-center px-6 text-center"
+          >
+            <h1
+              className="text-6xl font-black leading-none tracking-tight text-brand sm:text-8xl md:text-9xl"
+              style={{ textShadow: bursting ? '0 0 60px hsl(var(--brand-red) / 0.8)' : '0 0 24px hsl(var(--brand-red) / 0.35)' }}
             >
-              <div className="flex h-16 w-16 items-center justify-center rounded-2xl border border-trap-overstatement/40 bg-trap-overstatement/10">
-                <Sparkles className="h-8 w-8 animate-pulse text-trap-overstatement" aria-hidden />
-              </div>
-              <div className="space-y-2">
-                <p className="text-xs font-semibold uppercase tracking-[0.35em] text-trap-overstatement">
-                  Logical Vernacular Exam OS
-                </p>
-                <h2 className="text-2xl font-extrabold tracking-wider text-zinc-100 md:text-3xl">
-                  論理読解エンジンを起動
-                </h2>
-              </div>
-              <motion.button
-                type="button"
-                whileHover={{ scale: 1.04 }}
-                whileTap={{ scale: 0.97 }}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  startSequence();
-                }}
-                autoFocus
-                className="group flex min-h-11 items-center gap-3 rounded-full border border-trap-overstatement/60 bg-gradient-to-r from-trap-overstatement to-trap-partial px-8 py-3.5 font-mono text-sm font-bold tracking-widest text-white"
-              >
-                <Volume2 className="h-4 w-4 transition-transform group-hover:scale-110" aria-hidden />
-                <span>TAP TO LAUNCH</span>
-              </motion.button>
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  finishSplash();
-                }}
-                className="mt-2 min-h-11 px-4 text-xs text-zinc-400 underline-offset-4 hover:text-zinc-200 hover:underline"
-              >
-                サウンドなしでスキップ
-              </button>
-            </motion.div>
-          ) : (
-            <motion.div
-              initial={{ scale: 0.72, opacity: 0, filter: 'blur(12px)' }}
-              animate={
-                phase === 'playing'
-                  ? {
-                      scale: [0.72, 1.0, 1.08],
-                      opacity: [0, 1, 1],
-                      filter: ['blur(12px)', 'blur(0px)', 'blur(0px)'],
-                    }
-                  : { scale: 14, opacity: 0, filter: 'blur(8px)' }
-              }
-              transition={
-                phase === 'playing'
-                  ? { duration: 2.5, times: [0, 0.35, 1], ease: [0.16, 1, 0.3, 1] }
-                  : { duration: 0.75, ease: 'easeIn' }
-              }
-              className="relative z-10 flex flex-col items-center px-4 text-center"
-            >
-              <motion.span
-                initial={{ opacity: 0, letterSpacing: '0.1em' }}
-                animate={{ opacity: 1, letterSpacing: '0.45em' }}
-                transition={{ duration: 1.8, delay: 0.25, ease: 'easeOut' }}
-                className="mb-3 text-xs font-bold uppercase text-trap-overstatement md:text-sm"
-              >
-                LOGICAL VERNACULAR
-              </motion.span>
-              <h2 className="bg-gradient-to-b from-white via-zinc-100 to-zinc-400 bg-clip-text text-5xl font-black tracking-tighter text-transparent drop-shadow-[0_0_35px_hsl(var(--trap-overstatement)/0.65)] sm:text-7xl md:text-8xl">
-                受験<span className="text-trap-overstatement">OS</span>
-              </h2>
-              <motion.p
-                initial={{ opacity: 0, y: 12 }}
-                animate={{ opacity: 0.85, y: 0 }}
-                transition={{ duration: 1.0, delay: 0.75 }}
-                className="mt-5 text-xs font-medium tracking-[0.25em] text-zinc-400 sm:text-sm"
-              >
-                センスを排し、論理のアルゴリズムで現代文を制圧する
-              </motion.p>
-            </motion.div>
-          )}
-
-          {hasStarted && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 0.7 }}
-              transition={{ delay: 0.5 }}
-              className="absolute bottom-8 right-8 flex items-center gap-1.5 rounded-full border border-zinc-800 bg-zinc-900/80 px-4 py-2 text-xs font-medium text-zinc-400 backdrop-blur-md"
-            >
-              <span>画面タップでスキップ</span>
-              <FastForward className="h-3.5 w-3.5" aria-hidden />
-            </motion.div>
-          )}
+              受験OS
+            </h1>
+            <p className="mt-6 text-sm font-medium tracking-[0.5em] text-zinc-300 sm:text-base md:text-lg">
+              国語読解、成績向上。
+            </p>
+          </motion.div>
         </motion.div>
       )}
     </AnimatePresence>

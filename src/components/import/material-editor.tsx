@@ -156,7 +156,7 @@ export function MaterialEditor({ material, warnings, canStart, onChange, onStart
             disabled={!canStart}
             className="flex min-h-11 w-full items-center justify-center gap-2 rounded-md bg-accent px-4 text-sm font-semibold text-white disabled:opacity-40"
           >
-            この内容で確定し、消去法演習を開始する
+            このまま演習を開始
             <ArrowRight className="h-4 w-4" aria-hidden />
           </button>
           {!canStart && (

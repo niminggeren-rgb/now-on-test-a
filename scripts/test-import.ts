@@ -5,13 +5,14 @@ import {
   isPlayable,
   parseImportedMaterialJson,
   stripDataUrlPrefix,
+  validateGeneratedMaterial,
   validateImportedMaterial,
 } from '../src/lib/import-material';
-import { customMaterialRepository } from '../src/lib/repositories/customMaterialRepository';
+import { customMaterialRepository, isUuid } from '../src/lib/repositories/customMaterialRepository';
 import { getTodayKey } from '../src/components/common/cinematic-splash';
 import { importMaterialResponseSchema } from '../src/lib/gemini/import-material';
 import { TRAP_METADATA_MAP } from '../src/types/domain';
-import { ImportedMaterialSchema, TrapTypeEnum, type ExamAnalysisResult, type ImportedMaterial } from '../src/types/ai-pipeline';
+import { ImportedMaterialSchema, TargetLevelEnum, TrapTypeEnum, type ExamAnalysisResult, type ImportedMaterial } from '../src/types/ai-pipeline';
 
 function choice(id: string, correct: boolean, trap: ImportedMaterial['questions'][number]['choices'][number]['trapType']) {
   return {
@@ -128,5 +129,35 @@ assert.equal(customMaterialRepository.getInstructorCarteRecords().length, 5);
 assert.equal(customMaterialRepository.rewardTrapOvercome('causal_inversion').causal_inversion, 92);
 assert.equal(customMaterialRepository.rewardTrapOvercome('none').causal_inversion, 92);
 assert.equal(customMaterialRepository.rewardTrapOvercome('substitution').substitution, 0, '0 未満にならない');
+
+// --- Phase 7: テキスト生成教材の追加検証・UUID採番・メタ情報
+const generated = structuredClone(material);
+const gq = generated.questions[0];
+assert.ok(gq);
+assert.ok(validateGeneratedMaterial(generated).some((w) => w.includes('4択')), '選択肢が4つ未満なら警告');
+const four = ['ア', 'イ', 'ウ', 'エ'].map((id, i) => ({
+  id,
+  text: id,
+  isCorrect: i === 0,
+  trapType: (['none', 'overstatement', 'overstatement', 'unmentioned'] as ImportedMaterial['questions'][number]['choices'][number]['trapType'][])[i]!,
+  trapExplanation: 'e',
+  slashSegments: [{ segmentText: id, status: i === 0 ? ('valid' as const) : ('trap' as const) }],
+}));
+gq.choices = four;
+assert.ok(validateGeneratedMaterial(generated).some((w) => w.includes('重複')), '誤答トラップの重複を検出');
+four[2]!.trapType = 'causal_inversion';
+assert.deepEqual(validateGeneratedMaterial(generated), []);
+four[3]!.slashSegments = [{ segmentText: 'x', status: 'valid' }];
+assert.ok(validateGeneratedMaterial(generated).some((w) => w.includes('傷')), '誤答に傷の節が無ければ警告');
+
+const withMeta = customMaterialRepository.saveImportedMaterial(material, { sourceType: 'TEXT_PASTE', targetLevel: 'SOKEI' });
+assert.ok(withMeta && isUuid(withMeta.id), '教材IDは UUID');
+assert.equal(customMaterialRepository.getImportedMaterialById(withMeta.id)?.targetLevel, 'SOKEI');
+assert.equal(customMaterialRepository.updateImportedMaterial(withMeta.id, material)?.sourceType, 'TEXT_PASTE', '編集してもメタ情報を保持');
+const cloudOnly = { ...withMeta, id: '11111111-2222-4333-8444-555555555555', title: 'クラウド由来' };
+const merged = customMaterialRepository.mergeImportedMaterials([cloudOnly]);
+assert.ok(merged.some((m) => m.title === 'クラウド由来') && merged.some((m) => m.id === withMeta.id));
+assert.equal(isUuid('custom-123'), false);
+assert.deepEqual(TargetLevelEnum.options, ['COMMON_TEST', 'MARCH', 'SOKEI', 'NATIONAL_HARD']);
 
 console.log('test-import: all assertions passed');

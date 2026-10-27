@@ -27,6 +27,20 @@ export const TRAP_LABELS: Record<TrapType, string> = {
   none: '正解（論理一致）',
 };
 
+/** 【Phase 7】教材の入力経路と志望校レベル */
+export const SourceTypeEnum = z.enum(['TEXT_PASTE', 'IMAGE_OCR']);
+export type SourceType = z.infer<typeof SourceTypeEnum>;
+
+export const TargetLevelEnum = z.enum(['COMMON_TEST', 'MARCH', 'SOKEI', 'NATIONAL_HARD']);
+export type TargetLevel = z.infer<typeof TargetLevelEnum>;
+
+export const TARGET_LEVEL_LABELS: Record<TargetLevel, string> = {
+  COMMON_TEST: '共通テスト',
+  MARCH: 'MARCH',
+  SOKEI: '早慶',
+  NATIONAL_HARD: '難関国公立',
+};
+
 /** 【Phase 5】リアル教材カメラ取り込み（OCR＆自動問題化）の出力スキーマ */
 export const ImportedChoiceSchema = z.object({
   id: z.string().describe('選択肢の記号（ア, イ, ウ, エ, オ または 1, 2, 3, 4, 5）'),
