@@ -1,11 +1,10 @@
 import { Type, type GoogleGenAI, type Schema } from '@google/genai';
-import { describeGeminiError, GEMINI_MODELS } from '@/lib/gemini/client';
+import { describeGeminiError } from '@/lib/gemini/client';
+import { thinkingConfigFor, withGeminiRetry } from '@/lib/gemini/retry';
 import type { AllowedImageType } from '@/lib/exam-analysis';
 import { parseExamDiagnosisJson } from '@/lib/exam-diagnosis';
 import type { ExamAnalysisResult } from '@/types/ai-pipeline';
 
-// Vercel の maxDuration(60秒)より前に自分で打ち切り、タイムアウトだと分かる形で応答を返す
-const TIMEOUT_MS = 50_000;
 const MAX_OUTPUT_TOKENS = 6144;
 
 const TRAP_ENUM = [
@@ -135,23 +134,15 @@ export type ExamAnalysisOutcome =
   | { ok: true; data: ExamAnalysisResult }
   | { ok: false; reason: 'timeout' | 'busy' | 'invalid'; detail?: string };
 
-/** 429（利用上限）/ 503（過負荷）など、時間をおけば通る上流エラーか */
-function isBusyError(err: unknown): boolean {
-  const status = (err as { status?: unknown } | null)?.status;
-  return status === 429 || status === 500 || status === 503 || status === 504;
-}
-
-/** 問題用紙＋答案の2枚を Gemini（Flash・思考なし）で照合診断する。失敗は理由つきで返す。 */
+/** 問題用紙＋答案の2枚を Gemini（軽量 Flash 系）で照合診断する。混雑・タイムアウトは再試行し、失敗は理由つきで返す。 */
 export async function analyzeExamWithGemini(
   ai: GoogleGenAI,
   problem: ExamImagePart,
   answer: ExamImagePart,
 ): Promise<ExamAnalysisOutcome> {
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
-  try {
+  const outcome = await withGeminiRetry(async (signal, model) => {
     const response = await ai.models.generateContent({
-      model: GEMINI_MODELS.fast,
+      model,
       contents: [
         {
           role: 'user',
@@ -171,19 +162,16 @@ export async function analyzeExamWithGemini(
         responseMimeType: 'application/json',
         responseSchema: examDiagnosisResponseSchema,
         temperature: 0.2,
-        // 思考ステップを使わず、出力量にも上限を設けて応答を速くする
-        thinkingConfig: { thinkingBudget: 0 },
+        ...thinkingConfigFor(model),
         maxOutputTokens: MAX_OUTPUT_TOKENS,
-        abortSignal: controller.signal,
+        abortSignal: signal,
       },
     });
-    const data = parseExamDiagnosisJson(response.text);
-    return data ? { ok: true, data } : { ok: false, reason: 'invalid' };
-  } catch (err) {
-    if (controller.signal.aborted) return { ok: false, reason: 'timeout' };
+    return parseExamDiagnosisJson(response.text);
+  }).catch((err: unknown) => {
+    // 再試行しても直らない失敗（キー無効・権限など）。原因を画面に返す
     console.error('[analyze-exam] Gemini error:', err);
-    return { ok: false, reason: isBusyError(err) ? 'busy' : 'invalid', detail: describeGeminiError(err) };
-  } finally {
-    clearTimeout(timer);
-  }
+    return { ok: false as const, reason: 'invalid' as const, detail: describeGeminiError(err), attempts: 1 };
+  });
+  return outcome.ok ? { ok: true, data: outcome.value } : { ok: false, reason: outcome.reason, detail: outcome.detail };
 }

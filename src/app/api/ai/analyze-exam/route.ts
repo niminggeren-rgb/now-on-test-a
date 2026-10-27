@@ -10,7 +10,8 @@ import type { ExamAnalysisResult } from '@/types/ai-pipeline';
 
 export const runtime = 'nodejs';
 // Vercel の関数の実行上限。Gemini 側は 50秒で打ち切る（analyze-exam.ts）
-export const maxDuration = 60;
+// 混雑時の再試行を含めて数分かかり得るため長めに確保（Vercel のプラン上限が低い場合は、その上限に合わせて下げる）
+export const maxDuration = 300;
 
 const MAX_BODY_BYTES = Math.ceil((2 * MAX_IMPORT_IMAGE_BYTES * 4) / 3) + 512 * 1024;
 const rateLimited = createRateLimiter(5);

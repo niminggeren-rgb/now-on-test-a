@@ -3,6 +3,7 @@ import { OnDemandRequestSchema, Stage1TriageResponseSchema, Stage2InkSeparatedRe
 import { describeApiFailure } from '../src/lib/api-error';
 import { EXAM_UPLOAD_COMPRESSION, savedPercent } from '../src/lib/client-image';
 import { resolveGeminiKey } from '../src/lib/gemini/client';
+import { geminiModelCandidates, isTransientGeminiError, thinkingConfigFor, withGeminiRetry } from '../src/lib/gemini/retry';
 import { detectImageType } from '../src/lib/exam-analysis';
 import { evaluateReasoningMatch, type MatchQuestion } from '../src/lib/logic/reasoningMatcher';
 
@@ -86,4 +87,49 @@ assert.equal(describeApiFailure(413, null), '画像のサイズが大きすぎ�
 assert.equal(describeApiFailure(504, { success: false, error: '独自の理由' }), '独自の理由', 'サーバーの理由があればそれを優先');
 assert.ok(!describeApiFailure(500, null).includes('ピント'));
 
-console.log('test-phase8: all assertions passed');
+// --- 再試行・モデルフォールバック
+const err = (status: number | null) => Object.assign(new Error('x'), status === null ? {} : { status });
+const noWait = { sleep: async () => undefined };
+assert.deepEqual(geminiModelCandidates({}), ['gemini-3.8-flash', 'gemini-2.5-flash', 'gemini-2.5-flash-lite']);
+assert.deepEqual(geminiModelCandidates({ GEMINI_MODEL: 'my-model' })[0], 'my-model', '環境変数のモデルが最優先');
+assert.ok(isTransientGeminiError(err(503)) && isTransientGeminiError(err(429)) && isTransientGeminiError(err(null)));
+assert.ok(!isTransientGeminiError(err(400)) && !isTransientGeminiError(err(403)));
+assert.deepEqual(thinkingConfigFor('gemini-3.8-flash'), {});
+assert.deepEqual(thinkingConfigFor('gemini-2.5-flash'), { thinkingConfig: { thinkingBudget: 0 } });
+
+async function main(): Promise<void> {
+const used: string[] = [];
+const recovered = await withGeminiRetry(async (_s, model) => {
+  used.push(model);
+  if (used.length < 3) throw err(503);
+  return 'done';
+}, noWait);
+assert.ok(recovered.ok && recovered.value === 'done' && recovered.attempts === 3, '503 を繰り返しても、成功するまで再試行');
+assert.deepEqual(used, ['gemini-3.8-flash', 'gemini-2.5-flash', 'gemini-2.5-flash-lite'], '失敗のたびに別モデルへ');
+
+const missing: string[] = [];
+const fell = await withGeminiRetry(async (_s, model) => {
+  missing.push(model);
+  if (model === 'gemini-3.8-flash') throw err(404);
+  return 'ok';
+}, noWait);
+assert.ok(fell.ok && fell.model === 'gemini-2.5-flash', '存在しないモデル(404)は外して次を使う');
+assert.equal(missing.length, 2);
+
+await assert.rejects(withGeminiRetry(async () => { throw err(403); }, noWait), 'キー無効・権限は再試行せず即座に返す');
+
+let n = 0;
+const invalid = await withGeminiRetry(async () => { n++; return null; }, { ...noWait, maxAttempts: 3 });
+assert.ok(!invalid.ok && invalid.reason === 'invalid' && n === 3, '出力が読めないときも再試行し、尽きたら invalid');
+const gaveUp = await withGeminiRetry(async () => { throw err(503); }, { ...noWait, maxAttempts: 2 });
+assert.ok(!gaveUp.ok && gaveUp.reason === 'busy' && gaveUp.attempts === 2);
+const noTime = await withGeminiRetry(async () => 'x', { ...noWait, deadlineMs: 1000 });
+assert.ok(!noTime.ok, '残り時間が無ければ呼ばない');
+
+  console.log('test-phase8: all assertions passed');
+}
+
+void main().catch((e: unknown) => {
+  console.error(e);
+  process.exit(1);
+});
