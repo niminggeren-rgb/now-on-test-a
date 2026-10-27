@@ -10,6 +10,7 @@ import { TRAP_METADATA_MAP, type ActiveTrapType, type AnswerLog, type TrapWeakne
 import { cn } from '@/lib/utils';
 import { AiStatusFooter } from '@/components/layout/ai-status-footer';
 import { DashboardEmptyState } from './dashboard-empty-state';
+import { ProtocolMatrixPanel } from './protocol-matrix-panel';
 import { RecentLogsTable } from './recent-logs-table';
 import { SeverityBadge, TrapAnalysisPanel } from './trap-analysis-panel';
 
@@ -102,6 +103,7 @@ export function DashboardView({ questionIndex, trapIndex, startHref }: Dashboard
     return (
       <div className="mx-auto max-w-6xl space-y-8">
         <DashboardEmptyState startHref={startHref} />
+        <ProtocolMatrixPanel />
         <AiStatusFooter />
       </div>
     );
@@ -147,6 +149,8 @@ export function DashboardView({ questionIndex, trapIndex, startHref }: Dashboard
           )}
         </KpiCard>
       </section>
+
+      <ProtocolMatrixPanel />
 
       <section aria-label="トラップ別弱点分析">
         <div className="mb-3 flex flex-wrap items-center gap-3">

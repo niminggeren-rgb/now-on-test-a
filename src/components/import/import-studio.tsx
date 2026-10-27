@@ -6,6 +6,7 @@ import {
   AlertTriangle,
   Camera,
   ClipboardPaste,
+  Scissors,
   Edit3,
   Library,
   Play,
@@ -33,9 +34,11 @@ import {
   type SourceType,
   type TargetLevel,
 } from '@/types/ai-pipeline';
+import { ImageWorkbench } from './image-workbench';
 import { MaterialEditor } from './material-editor';
 
 type InputTab = 'text' | 'image';
+type StudioTab = InputTab | 'workbench';
 
 const LOADING_MESSAGES: Record<InputTab, string[]> = {
   image: [
@@ -54,7 +57,9 @@ const LOADING_MESSAGES: Record<InputTab, string[]> = {
 
 export function ImportStudio() {
   const router = useRouter();
-  const [tab, setTab] = useState<InputTab>('text');
+  const [studioTab, setStudioTab] = useState<StudioTab>('text');
+  const tab: InputTab = studioTab === 'workbench' ? 'text' : studioTab;
+  const setTab = (value: StudioTab) => setStudioTab(value);
   const [targetLevel, setTargetLevel] = useState<TargetLevel>('MARCH');
   const [rawText, setRawText] = useState('');
   const [images, setImages] = useState<PreparedImage[]>([]);
@@ -168,15 +173,15 @@ export function ImportStudio() {
     setError(null);
   };
 
-  const tabButton = (value: InputTab, label: string, Icon: typeof Camera) => (
+  const tabButton = (value: StudioTab, label: string, Icon: typeof Camera) => (
     <button
       type="button"
       role="tab"
-      aria-selected={tab === value}
+      aria-selected={studioTab === value}
       onClick={() => setTab(value)}
       className={cn(
         'flex min-h-11 flex-1 items-center justify-center gap-2 rounded-md px-4 text-sm font-semibold transition-colors',
-        tab === value ? 'bg-foreground text-background' : 'text-muted hover:text-foreground',
+        studioTab === value ? 'bg-foreground text-background' : 'text-muted hover:text-foreground',
       )}
     >
       <Icon className="h-4 w-4" aria-hidden />
@@ -206,8 +211,13 @@ export function ImportStudio() {
             <div role="tablist" aria-label="入力方法" className="flex gap-1 rounded-lg border bg-background p-1">
               {tabButton('text', 'テキスト貼り付け', ClipboardPaste)}
               {tabButton('image', 'カメラ撮影 / 画像', Camera)}
+              {tabButton('workbench', '答案ワークベンチ', Scissors)}
             </div>
 
+            {studioTab === 'workbench' ? (
+              <ImageWorkbench />
+            ) : (
+              <>
             <label className="block space-y-1.5">
               <span className="block text-xs font-semibold text-muted">志望校レベル</span>
               <select
@@ -328,6 +338,8 @@ export function ImportStudio() {
               <Sparkles className="h-5 w-5" aria-hidden />
               {generateLabel}
             </button>
+              </>
+            )}
           </div>
 
           {library.length > 0 && (

@@ -6,6 +6,8 @@ import { BookOpen, CheckCircle2, ListChecks, Target, XCircle } from 'lucide-reac
 import { useTimer, formatElapsed } from '@/hooks/use-timer';
 import { usePracticeShortcuts } from '@/hooks/use-practice-shortcuts';
 import { useMediaQuery } from '@/hooks/use-media-query';
+import { buildAttemptFromPractice } from '@/lib/analytics/protocolFromPractice';
+import { protocolRepository } from '@/lib/repositories/protocolRepository';
 import { createBrowserRepository, type SubmitAnswerResult } from '@/lib/repository';
 import { ACTIVE_TRAP_TYPES } from '@/lib/scoring';
 import { cn } from '@/lib/utils';
@@ -18,6 +20,7 @@ import {
 } from '@/types/domain';
 import { ChoiceEliminator } from './choice-eliminator';
 import { ExplanationDrawer } from './explanation-drawer';
+import { ProtocolTools } from './protocol-tools';
 import { MobileActionBar } from './mobile-action-bar';
 import { PassageReader, type WritingMode } from './passage-reader';
 
@@ -250,6 +253,9 @@ export function PracticeSession({ passage, trapFocus, nextPassageHref }: Practic
       pauseTimer();
       setPickerLabel(null);
       setMessage('');
+      // プロトコル別の弱点マトリクスを更新（保存の失敗は演習の流れを止めない）
+      const attempt = buildAttemptFromPractice(res.data.log, question);
+      if (attempt) void protocolRepository.recordAttempt(attempt).catch(() => undefined);
       setStates((prev) => ({
         ...prev,
         [question.id]: { ...(prev[question.id] ?? EMPTY_STATE), result: res.data, elapsedMs: timeSpentMs },
@@ -573,6 +579,8 @@ export function PracticeSession({ passage, trapFocus, nextPassageHref }: Practic
           ヘルプ
         </span>
       </footer>
+
+      {question && <ProtocolTools passage={passage} question={question} />}
     </div>
   );
 }

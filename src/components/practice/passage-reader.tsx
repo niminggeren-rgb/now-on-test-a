@@ -225,7 +225,7 @@ export function PassageReader({
             </p>
           </header>
           {passage.paragraphs.map((para) => (
-            <p key={para.paragraphNumber} className={cn(vertical ? 'ml-6' : 'mb-5 grid grid-cols-[2.25rem_1fr] gap-x-2')}>
+            <p key={para.paragraphNumber} data-paragraph-index={para.paragraphNumber - 1} className={cn(vertical ? 'ml-6' : 'mb-5 grid grid-cols-[2.25rem_1fr] gap-x-2')}>
               <span
                 className={cn(
                   'select-none font-mono text-[11px] tracking-normal text-muted',
