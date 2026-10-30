@@ -28,11 +28,31 @@ export async function POST(request: NextRequest) {
   if (body.messages[body.messages.length - 1]?.role !== 'user') return jsonError('最後のメッセージは生徒の発言である必要があります', 400);
 
   const ai = getGeminiClient();
-  if (!ai) return jsonError('AIメンターが利用できません（GEMINI_API_KEY が未設定です）。', 503);
+  const { getNvidiaClient } = await import('@/lib/nvidia/client');
+  const nvidiaClient = getNvidiaClient();
+  if (!ai && !nvidiaClient) return jsonError('AIメンターが利用できません（GEMINI_API_KEY または NVIDIA_API_KEY を設定してください）。', 503);
 
   const lastUser = body.messages[body.messages.length - 1]!.content;
   const activeStep = inferTargetProtocolStep(lastUser, body.targetStep);
 
+  // Nvidia優先でストリーム、なければGemini
+  if (nvidiaClient) {
+    const { streamMentorChatWithNvidia } = await import('@/lib/nvidia/mentor-chat');
+    const result = await streamMentorChatWithNvidia(nvidiaClient, body);
+    if ('error' in result) {
+      if (!ai) return jsonError(result.error, 502);
+    } else {
+      return new Response(result as ReadableStream<Uint8Array>, {
+        headers: {
+          'Content-Type': 'text/plain; charset=utf-8',
+          'Cache-Control': 'no-cache, no-transform',
+          'X-Vernacular-Protocol-Step': activeStep,
+        },
+      });
+    }
+  }
+
+  if (!ai) return jsonError('AIメンターが利用できません。', 503);
   let stream: Awaited<ReturnType<typeof ai.models.generateContentStream>>;
   try {
     stream = await ai.models.generateContentStream({

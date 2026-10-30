@@ -62,41 +62,77 @@ export async function POST(request: NextRequest) {
   }
 
   const ai = getGeminiClient();
-  if (!ai) return fail('AI解析が利用できません（GEMINI_API_KEY が未設定です）。', 503);
+  const { getNvidiaClient } = await import('@/lib/nvidia/client');
+  const nvidiaClient = getNvidiaClient();
+  if (!ai && !nvidiaClient) return fail('AI解析が利用できません（GEMINI_API_KEY または NVIDIA_API_KEY を設定してください）。', 503);
 
-  // Stage 1: 軽量な仕分け。画像の対応付けは imageId ではなく添付順の imageIndex を正とする
-  const triage = await triageImages(ai, images);
-  if (!triage) return fail('画像の仕分けに失敗しました。もう一度お試しください。', 502);
+  let triage: Awaited<ReturnType<typeof triageImages>> | null = null;
+  let analysis: Awaited<ReturnType<typeof extractInkSeparated>> | null = null;
 
-  const byIndex = new Map(triage.items.map((t) => [t.imageIndex, t]));
-  const retained: Phase8Image[] = [];
-  images.forEach((img, i) => {
-    const t = byIndex.get(i);
-    // 仕分け結果が無い画像は、安全側に倒して画像を保持する
-    if (!t || t.requiresVisualInspection || t.category === 'STUDENT_SHEET' || t.hasHandwriting) retained.push(img);
-  });
+  if (ai) {
+    triage = await triageImages(ai, images);
+    if (triage) {
+      const byIndex = new Map(triage.items.map((t) => [t.imageIndex, t]));
+      const retained: Phase8Image[] = [];
+      images.forEach((img, i) => {
+        const t = byIndex.get(i);
+        if (!t || t.requiresVisualInspection || t.category === 'STUDENT_SHEET' || t.hasHandwriting) retained.push(img);
+      });
+      const digest = triage.items.map((t) => `[ImageIndex:${t.imageIndex} / Category:${t.category}]\n${t.extractedRawText}`).join('\n\n====================\n\n');
+      analysis = await extractInkSeparated(ai, digest, retained);
+      if (analysis) {
+        const discarded = images.length - retained.length;
+        const body: ActionResult<ClassifyAndOcrResult> = {
+          success: true,
+          data: {
+            pipelineStats: {
+              totalUploadedImages: images.length,
+              stage2RetainedVisualImages: retained.length,
+              stage2DiscardedImages: discarded,
+              estimatedVisionTokenSavingPercent: Math.round((discarded / images.length) * 100),
+            },
+            triage: triage.items,
+            analysis,
+          },
+        };
+        return NextResponse.json(body);
+      }
+    }
+    if (!nvidiaClient) {
+      if (!triage) return fail('画像の仕分けに失敗しました。もう一度お試しください。', 502);
+      return fail('設問の構造化に失敗しました。写真の明るさとピントを確認してください。', 502);
+    }
+  }
 
-  const digest = triage.items
-    .map((t) => `[ImageIndex:${t.imageIndex} / Category:${t.category}]\n${t.extractedRawText}`)
-    .join('\n\n====================\n\n');
-
-  // Stage 2: 手書き・図版のある画像だけで、鉛筆/赤ペン分離と選択肢の傷の構造化を行う
-  const analysis = await extractInkSeparated(ai, digest, retained);
-  if (!analysis) return fail('設問の構造化に失敗しました。写真の明るさとピントを確認してください。', 502);
-
-  const discarded = images.length - retained.length;
-  const body: ActionResult<ClassifyAndOcrResult> = {
-    success: true,
-    data: {
-      pipelineStats: {
-        totalUploadedImages: images.length,
-        stage2RetainedVisualImages: retained.length,
-        stage2DiscardedImages: discarded,
-        estimatedVisionTokenSavingPercent: Math.round((discarded / images.length) * 100),
+  // Nvidiaフォールバック
+  if (nvidiaClient) {
+    const { triageImagesWithNvidia, extractInkSeparatedWithNvidia } = await import('@/lib/nvidia/phase8');
+    const nvidiaTriage = await triageImagesWithNvidia(nvidiaClient, images as never);
+    if (!nvidiaTriage) return fail('画像の仕分けに失敗しました。もう一度お試しください。', 502);
+    const byIndex = new Map(nvidiaTriage.items.map((t) => [t.imageIndex, t]));
+    const nvidiaRetained: Phase8Image[] = [];
+    images.forEach((img, i) => {
+      const t = byIndex.get(i);
+      if (!t || t.requiresVisualInspection || t.category === 'STUDENT_SHEET' || t.hasHandwriting) nvidiaRetained.push(img as never);
+    });
+    const digest = nvidiaTriage.items.map((t) => `[ImageIndex:${t.imageIndex} / Category:${t.category}]\n${t.extractedRawText}`).join('\n\n====================\n\n');
+    const nvidiaAnalysis = await extractInkSeparatedWithNvidia(nvidiaClient, digest, nvidiaRetained as never);
+    if (!nvidiaAnalysis) return fail('設問の構造化に失敗しました。写真の明るさとピントを確認してください。', 502);
+    const discarded = images.length - nvidiaRetained.length;
+    const body: ActionResult<ClassifyAndOcrResult> = {
+      success: true,
+      data: {
+        pipelineStats: {
+          totalUploadedImages: images.length,
+          stage2RetainedVisualImages: nvidiaRetained.length,
+          stage2DiscardedImages: discarded,
+          estimatedVisionTokenSavingPercent: Math.round((discarded / images.length) * 100),
+        },
+        triage: nvidiaTriage.items,
+        analysis: nvidiaAnalysis,
       },
-      triage: triage.items,
-      analysis,
-    },
-  };
-  return NextResponse.json(body);
+    };
+    return NextResponse.json(body);
+  }
+  return fail('設問の構造化に失敗しました。', 502);
 }

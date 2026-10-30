@@ -61,9 +61,31 @@ export async function POST(request: NextRequest) {
   }
 
   const ai = getGeminiClient();
-  if (!ai) return fail('AI解説が利用できません（GEMINI_API_KEY が未設定です）。', 503);
+  const { getNvidiaClient } = await import('@/lib/nvidia/client');
+  const nvidiaClient = getNvidiaClient();
+  if (!ai && !nvidiaClient) return fail('AI解説が利用できません（GEMINI_API_KEY または NVIDIA_API_KEY を設定してください）。', 503);
 
-  const explanation = await generateOnDemandExplanation(ai, input);
+  let explanation: Awaited<ReturnType<typeof generateOnDemandExplanation>> | null = null;
+  if (ai) {
+    explanation = await generateOnDemandExplanation(ai, input);
+    if (explanation) {
+      if (supabase) {
+        try {
+          await supabase.from('explanation_caches').upsert({ cache_key: cacheKey, mode: input.mode, payload: explanation }, { onConflict: 'cache_key' });
+        } catch {}
+      }
+      const body: ActionResult<{ explanation: OnDemandExplanationResponse; fromCache: 'none' }> = {
+        success: true,
+        data: { explanation, fromCache: 'none' },
+      };
+      return NextResponse.json(body);
+    }
+    if (!nvidiaClient) return fail('解説を生成できませんでした。もう一度お試しください。', 502);
+  }
+  if (nvidiaClient) {
+    const { generateOnDemandExplanationWithNvidia } = await import('@/lib/nvidia/phase8');
+    explanation = await generateOnDemandExplanationWithNvidia(nvidiaClient, input);
+  }
   if (!explanation) return fail('解説を生成できませんでした。もう一度お試しください。', 502);
 
   if (supabase) {

@@ -55,13 +55,29 @@ export async function POST(request: NextRequest) {
   }
 
   const ai = getGeminiClient();
+  const { getNvidiaClient } = await import('@/lib/nvidia/client');
+  const nvidiaClient = getNvidiaClient();
   let evaluation: DescriptiveEvaluation;
-  if (!ai) {
+  if (!ai && !nvidiaClient) {
     evaluation = gradeDescriptiveLocally(question, answer, 'AI採点が未設定のため、ローカル採点エンジンで採点しました。');
-  } else {
+  } else if (ai) {
     const raw = await evaluateWithGemini(ai, passage, question, answer);
-    evaluation = raw
-      ? normalizeGeminiEvaluation(question, answer, raw)
+    if (raw) {
+      evaluation = normalizeGeminiEvaluation(question, answer, raw);
+    } else if (nvidiaClient) {
+      const { evaluateWithNvidia } = await import('@/lib/nvidia/evaluate-descriptive');
+      const nvidiaRaw = await evaluateWithNvidia(nvidiaClient, passage, question, answer);
+      evaluation = nvidiaRaw
+        ? normalizeGeminiEvaluation(question, answer, nvidiaRaw)
+        : gradeDescriptiveLocally(question, answer, 'AI採点に失敗したため、ローカル採点エンジンで採点しました。');
+    } else {
+      evaluation = gradeDescriptiveLocally(question, answer, 'AI採点に失敗したため、ローカル採点エンジンで採点しました。');
+    }
+  } else {
+    const { evaluateWithNvidia } = await import('@/lib/nvidia/evaluate-descriptive');
+    const nvidiaRaw = await evaluateWithNvidia(nvidiaClient!, passage, question, answer);
+    evaluation = nvidiaRaw
+      ? normalizeGeminiEvaluation(question, answer, nvidiaRaw)
       : gradeDescriptiveLocally(question, answer, 'AI採点に失敗したため、ローカル採点エンジンで採点しました。');
   }
 
