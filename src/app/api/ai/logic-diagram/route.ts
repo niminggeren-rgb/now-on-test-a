@@ -57,9 +57,28 @@ export async function POST(request: NextRequest) {
   }
 
   const ai = getGeminiClient();
-  if (!ai) return fail('AI解析が利用できません（GEMINI_API_KEY が未設定です）。', 503);
+  const { getNvidiaClient } = await import('@/lib/nvidia/client');
+  const nvidiaClient = getNvidiaClient();
+  if (!ai && !nvidiaClient) return fail('AI解析が利用できません（GEMINI_API_KEY または NVIDIA_API_KEY を設定してください）。', 503);
 
-  const diagram = await generateLogicDiagram(ai, input);
+  let diagram: Awaited<ReturnType<typeof generateLogicDiagram>> | null = null;
+  if (ai) {
+    diagram = await generateLogicDiagram(ai, input);
+    if (diagram) {
+      if (supabase) {
+        try {
+          await supabase.from('passage_logic_diagrams').upsert({ content_hash: contentHash, diagram_json: diagram }, { onConflict: 'content_hash' });
+        } catch {}
+      }
+      const body: ActionResult<LogicDiagramData> = { success: true, data: diagram };
+      return NextResponse.json(body);
+    }
+    if (!nvidiaClient) return fail('論理マップを生成できませんでした。もう一度お試しください。', 502);
+  }
+  if (nvidiaClient) {
+    const { generateLogicDiagramWithNvidia } = await import('@/lib/nvidia/logic-diagram');
+    diagram = await generateLogicDiagramWithNvidia(nvidiaClient, input);
+  }
   if (!diagram) return fail('論理マップを生成できませんでした。もう一度お試しください。', 502);
 
   if (supabase) {

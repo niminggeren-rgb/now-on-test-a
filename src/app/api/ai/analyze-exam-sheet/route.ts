@@ -63,18 +63,38 @@ export async function POST(request: NextRequest) {
 
   const weakTraps = parseWeakTraps(form.get('weakTraps'));
   const ai = getGeminiClient();
+  const { getNvidiaClient } = await import('@/lib/nvidia/client');
+  const nvidiaClient = getNvidiaClient();
 
   let analysis: ExamAnalysis;
-  if (!ai) {
+  if (!ai && !nvidiaClient) {
     analysis = simulateExamAnalysis(weakTraps);
-  } else {
+  } else if (ai) {
     const raw = await analyzeWithGemini(ai, images, weakTraps);
-    analysis = raw
-      ? { ...raw, source: 'gemini' }
-      : {
-          ...simulateExamAnalysis(weakTraps),
-          notice: 'AI解析に失敗したため、画像の内容は解析していません。表示は、あなたの弱点データに基づくシミュレーションです。',
-        };
+    if (raw) {
+      analysis = { ...raw, source: 'gemini' };
+    } else if (nvidiaClient) {
+      const { analyzeWithNvidia } = await import('@/lib/nvidia/analyze-exam-sheet');
+      const nvidiaRaw = await analyzeWithNvidia(nvidiaClient, images, weakTraps);
+      analysis = nvidiaRaw
+        ? { ...nvidiaRaw, source: 'gemini' as const }
+        : {
+            ...simulateExamAnalysis(weakTraps),
+            notice: 'AI解析に失敗したため、画像の内容は解析していません。表示は、あなたの弱点データに基づくシミュレーションです。',
+          };
+    } else {
+      analysis = {
+        ...simulateExamAnalysis(weakTraps),
+        notice: 'AI解析に失敗したため、画像の内容は解析していません。表示は、あなたの弱点データに基づくシミュレーションです。',
+      };
+    }
+  } else {
+    // Geminiなし・Nvidiaあり
+    const { analyzeWithNvidia } = await import('@/lib/nvidia/analyze-exam-sheet');
+    const nvidiaRaw = await analyzeWithNvidia(nvidiaClient!, images, weakTraps);
+    analysis = nvidiaRaw
+      ? { ...nvidiaRaw, source: 'gemini' as const }
+      : simulateExamAnalysis(weakTraps);
   }
 
   const body: ActionResult<ExamAnalysis> = { success: true, data: analysis };

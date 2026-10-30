@@ -54,16 +54,34 @@ export async function POST(request: NextRequest) {
   if (!problem || !answer) return fail('PNG・JPEG・WebP の画像のみ解析できます', 400);
 
   const ai = getGeminiClient();
-  if (!ai) return fail('AI解析が利用できません（GEMINI_API_KEY が未設定です）。', 503);
+  const { getNvidiaClient } = await import('@/lib/nvidia/client');
+  const nvidiaClient = getNvidiaClient();
+  if (!ai && !nvidiaClient) return fail('AI解析が利用できません（GEMINI_API_KEY または NVIDIA_API_KEY を設定してください）。', 503);
 
-  const outcome = await analyzeExamWithGemini(ai, problem, answer);
-  if (!outcome.ok) {
-    if (outcome.reason === 'timeout') return fail('処理がタイムアウトしました。もう一度お試しください。', 504);
-    if (outcome.reason === 'busy') return fail('AIサービスが混み合っています。しばらく待ってから、もう一度お試しください。', 503);
-    if (outcome.detail) return fail(outcome.detail, 502); // AI 呼び出し自体が失敗した原因（キー無効・モデル未対応など）
-    return fail('診断結果を読み取れませんでした。もう一度お試しください（改善しない場合は、撮り直してください）。', 502);
+  // Gemini優先、失敗したらNvidiaへフォールバック
+  let outcome: Awaited<ReturnType<typeof analyzeExamWithGemini>> | null = null;
+  if (ai) {
+    outcome = await analyzeExamWithGemini(ai, problem, answer);
+    if (outcome.ok) {
+      const body: ActionResult<ExamAnalysisResult> = { success: true, data: outcome.data };
+      return NextResponse.json(body);
+    }
+    if (!nvidiaClient) {
+      if (outcome.reason === 'timeout') return fail('処理がタイムアウトしました。もう一度お試しください。', 504);
+      if (outcome.reason === 'busy') return fail('AIサービスが混み合っています。しばらく待ってから、もう一度お試しください。', 503);
+      if (outcome.detail) return fail(outcome.detail, 502);
+      return fail('診断結果を読み取れませんでした。もう一度お試しください（改善しない場合は、撮り直してください）。', 502);
+    }
   }
-  const result = outcome.data;
-  const body: ActionResult<ExamAnalysisResult> = { success: true, data: result };
-  return NextResponse.json(body);
+  if (nvidiaClient) {
+    const { analyzeExamWithNvidia } = await import('@/lib/nvidia/analyze-exam');
+    const nvidiaOutcome = await analyzeExamWithNvidia(nvidiaClient, problem, answer);
+    if (!nvidiaOutcome.ok) {
+      if (nvidiaOutcome.detail) return fail(nvidiaOutcome.detail, 502);
+      return fail('診断結果を読み取れませんでした。もう一度お試しください。', 502);
+    }
+    const body: ActionResult<ExamAnalysisResult> = { success: true, data: nvidiaOutcome.data };
+    return NextResponse.json(body);
+  }
+  return fail('診断結果を読み取れませんでした。', 502);
 }
