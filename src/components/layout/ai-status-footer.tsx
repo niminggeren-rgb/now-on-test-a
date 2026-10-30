@@ -5,6 +5,8 @@ import { cn } from '@/lib/utils';
 
 interface AiStatus {
   gemini: boolean;
+  nvidia: boolean;
+  nvidiaModel: string | null;
   supabase: boolean;
   appMode: string;
 }
@@ -30,9 +32,9 @@ export function AiStatusFooter() {
       : status === 'error'
         ? 'status check failed'
         : `mode: ${status.appMode} · supabase: ${status.supabase ? 'connected' : 'not configured (local)'} · gemini: ${
-            status.gemini ? 'connected (2.5-flash / 2.5-pro)' : 'not configured (local fallback)'
-          }`;
-  const online = typeof status === 'object' && status !== null && status.gemini;
+            status.gemini ? 'connected' : 'not configured'
+          } · nvidia: ${status.nvidia ? `connected (${status.nvidiaModel ?? 'nemotron'})` : 'not configured'}`;
+  const online = typeof status === 'object' && status !== null && (status.gemini || status.nvidia);
 
   return (
     <p className="flex items-center justify-center gap-2 font-mono text-[11px] text-muted" role="status">

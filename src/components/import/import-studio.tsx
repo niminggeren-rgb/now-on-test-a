@@ -61,7 +61,7 @@ const LOADING_MESSAGES: Record<InputTab, string[]> = {
 export function ImportStudio() {
   const router = useRouter();
   const aiStatus = useAiStatus();
-  const aiReady = aiStatus?.gemini !== false; // 確認中・確認失敗のときは止めない
+  const aiReady = !aiStatus || aiStatus.gemini || aiStatus.nvidia; // どちらかが使えればOK、確認中は止めない
   const [studioTab, setStudioTab] = useState<StudioTab>('text');
   const tab: InputTab = studioTab === 'workbench' ? 'text' : studioTab;
   const setTab = (value: StudioTab) => setStudioTab(value);

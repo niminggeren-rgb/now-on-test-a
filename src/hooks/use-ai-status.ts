@@ -5,6 +5,12 @@ import { useEffect, useState } from 'react';
 export interface AiStatus {
   gemini: boolean;
   geminiKeySource: string | null;
+  nvidia: boolean;
+  nvidiaKeySource: string | null;
+  nvidiaModel: string | null;
+  nvidiaBaseUrl: string | null;
+  supabase: boolean;
+  appMode: string;
   deployEnv: string;
 }
 
@@ -25,4 +31,17 @@ export function useAiStatus(): AiStatus | null {
     };
   }, []);
   return status;
+}
+
+export function isAiAvailable(status: AiStatus | null): boolean {
+  if (!status) return true; // 確認中はブロックしない
+  return status.gemini || status.nvidia;
+}
+
+export function aiProviderLabel(status: AiStatus | null): string {
+  if (!status) return '確認中';
+  if (status.gemini && status.nvidia) return 'Gemini + Nvidia';
+  if (status.gemini) return 'Gemini';
+  if (status.nvidia) return `Nvidia (${status.nvidiaModel ?? 'nemotron'})`;
+  return '未設定';
 }

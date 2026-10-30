@@ -23,7 +23,7 @@ const rateLimited = createRateLimiter(20);
 
 const contentPartSchema = z.union([
   z.object({ type: z.literal('text'), text: z.string() }),
-  z.object({ type: z.literal('image_url'), image_url: z.object({ url: z.string().min(1).max(8000) }) }),
+  z.object({ type: z.literal('image_url'), image_url: z.object({ url: z.string().min(1).max(80000) }) }),
 ]);
 
 const messageSchema = z.object({

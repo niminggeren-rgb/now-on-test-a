@@ -19,10 +19,11 @@ const rateLimited = createRateLimiter(10);
  *   ]}]
  *
  * POST { imageUrl, prompt? } で呼び出すと、NvidiaのVisionモデルが画像を読み取って回答する
+ * imageUrl は https URL または data:image/...;base64,... 形式の data URI も可（アプリ内アップロード対応）
  */
 
 const bodySchema = z.object({
-  imageUrl: z.string().url().max(8000),
+  imageUrl: z.string().min(1).max(80000),
   prompt: z.string().max(2000).optional(),
   model: z.string().min(1).max(200).optional(),
   stream: z.boolean().optional(),
@@ -31,6 +32,16 @@ const bodySchema = z.object({
 function fail(error: string, status: number) {
   const body: ActionResult<never> = { success: false, error };
   return NextResponse.json(body, { status });
+}
+
+function isValidImageUrl(v: string): boolean {
+  if (v.startsWith('data:image/')) return true;
+  try {
+    const u = new URL(v);
+    return u.protocol === 'https:' || u.protocol === 'http:';
+  } catch {
+    return false;
+  }
 }
 
 export async function POST(request: NextRequest) {
@@ -51,6 +62,9 @@ export async function POST(request: NextRequest) {
   }
 
   const { imageUrl, prompt, model, stream } = parsed.data;
+  if (!isValidImageUrl(imageUrl)) {
+    return fail('imageUrl は https URL または data:image/*;base64,... 形式で指定してください', 400);
+  }
   const text =
     prompt ?? 'Read the traffic sign in this image. What does it say, and what color is the sign?';
 
@@ -161,6 +175,6 @@ export async function GET() {
       prompt: 'Read the traffic sign in this image. What does it say, and what color is the sign?',
       stream: false,
     },
-    note: 'prompt省略時は上記デフォルト質問が使われます。stream:true でストリーミング（text/plain）',
+    note: 'prompt省略時は上記デフォルト質問が使われます。stream:true でストリーミング（text/plain）。imageUrlはdata:image/*;base64,...のdata URIでも可',
   });
 }

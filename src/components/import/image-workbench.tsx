@@ -177,7 +177,7 @@ export function ImageWorkbench({ onCommit }: ImageWorkbenchProps) {
         <button
           type="button"
           onClick={() => fileRef.current?.click()}
-          disabled={busy || aiStatus?.gemini === false}
+          disabled={busy || (aiStatus !== null && !aiStatus.gemini && !aiStatus.nvidia)}
           className="flex min-h-11 shrink-0 items-center gap-2 rounded-lg bg-accent px-4 text-xs font-bold text-white disabled:opacity-50"
         >
           <Upload className="h-4 w-4" aria-hidden />
