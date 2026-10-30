@@ -70,15 +70,29 @@ async function handle(request: NextRequest) {
   }
 
   const ai = getGeminiClient();
-  if (!ai) {
-    return fail('AI解析が利用できません（GEMINI_API_KEY が未設定です）。', 503);
+  const { getNvidiaClient } = await import('@/lib/nvidia/client');
+  const nvidiaClient = getNvidiaClient();
+  if (!ai && !nvidiaClient) {
+    return fail('AI解析が利用できません（GEMINI_API_KEY または NVIDIA_API_KEY を設定してください）。', 503);
   }
 
   if (parsed.data.sourceType === 'TEXT_PASTE') {
-    const generated = await generateMaterialFromText(ai, parsed.data.rawText, parsed.data.targetLevel);
-    if (!generated) return fail('問題を生成できませんでした。文章を確認して、もう一度お試しください。', 502);
-    const textBody: ActionResult<ImportedMaterial> = { success: true, data: generated };
-    return NextResponse.json(textBody);
+    if (ai) {
+      const generated = await generateMaterialFromText(ai, parsed.data.rawText, parsed.data.targetLevel);
+      if (generated) {
+        const textBody: ActionResult<ImportedMaterial> = { success: true, data: generated };
+        return NextResponse.json(textBody);
+      }
+      if (!nvidiaClient) return fail('問題を生成できませんでした。文章を確認して、もう一度お試しください。', 502);
+    }
+    if (nvidiaClient) {
+      const { generateMaterialFromTextWithNvidia } = await import('@/lib/nvidia/import-material');
+      const generated = await generateMaterialFromTextWithNvidia(nvidiaClient, parsed.data.rawText, parsed.data.targetLevel);
+      if (!generated) return fail('問題を生成できませんでした。文章を確認して、もう一度お試しください。', 502);
+      const textBody: ActionResult<ImportedMaterial> = { success: true, data: generated };
+      return NextResponse.json(textBody);
+    }
+    return fail('問題を生成できませんでした。', 502);
   }
 
   const images: ImportImagePart[] = [];
@@ -93,12 +107,26 @@ async function handle(request: NextRequest) {
     images.push({ mimeType: type, data: base64 });
   }
 
-  const material = await importMaterialWithGemini(ai, images);
-  if (!material) {
-    return fail('教材を読み取れませんでした。ピントと明るさを確認し、もう一度撮影してください。', 502);
+  if (ai) {
+    const material = await importMaterialWithGemini(ai, images);
+    if (material) {
+      const body: ActionResult<ImportedMaterial> = { success: true, data: material };
+      return NextResponse.json(body);
+    }
+    if (!nvidiaClient) {
+      return fail('教材を読み取れませんでした。ピントと明るさを確認し、もう一度撮影してください。', 502);
+    }
   }
-  const body: ActionResult<ImportedMaterial> = { success: true, data: material };
-  return NextResponse.json(body);
+  if (nvidiaClient) {
+    const { importMaterialWithNvidia } = await import('@/lib/nvidia/import-material');
+    const material = await importMaterialWithNvidia(nvidiaClient, images as never);
+    if (!material) {
+      return fail('教材を読み取れませんでした。ピントと明るさを確認し、もう一度撮影してください。', 502);
+    }
+    const body: ActionResult<ImportedMaterial> = { success: true, data: material };
+    return NextResponse.json(body);
+  }
+  return fail('教材を読み取れませんでした。', 502);
 }
 
 export async function POST(request: NextRequest) {
