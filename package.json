@@ -17,7 +17,9 @@
     "test:import": "tsx scripts/test-import.ts",
     "test:diagnosis": "tsx scripts/test-exam-diagnosis.ts",
     "test:phase8": "tsx scripts/test-phase8.ts",
-    "test:protocol": "tsx scripts/test-protocol.ts"
+    "test:protocol": "tsx scripts/test-protocol.ts",
+    "test:nvidia": "tsx scripts/nvidia-example.ts",
+    "nvidia:example": "tsx scripts/nvidia-example.ts"
   },
   "devDependencies": {
     "@types/node": "^22.20.5",
@@ -43,6 +45,7 @@
     "framer-motion": "^14.6.0",
     "lucide-react": "^1.61.0",
     "next": "^15.5.28",
+    "openai": "^4.104.0",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
     "react-hook-form": "^7.91.0",
