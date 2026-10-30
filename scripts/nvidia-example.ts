@@ -108,5 +108,10 @@ async function runOnce() {
   console.log(msg?.content ?? '(empty)');
 }
 
-if (doStream) await runStreaming();
-else await runOnce();
+void (async () => {
+  if (doStream) await runStreaming();
+  else await runOnce();
+})().catch((e) => {
+  console.error('Nvidia API error:', e);
+  process.exit(1);
+});
