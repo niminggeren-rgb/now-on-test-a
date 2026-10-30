@@ -1,30 +1,15 @@
 import type { Metadata } from 'next';
-import { Inter, JetBrains_Mono, Noto_Sans_JP, Noto_Serif_JP } from 'next/font/google';
 import type { ReactNode } from 'react';
 import { Providers } from './providers';
-import { cn } from '@/lib/utils';
 import './globals.css';
 
-const inter = Inter({ subsets: ['latin'], variable: '--font-inter', display: 'swap' });
-const notoSansJp = Noto_Sans_JP({
-  subsets: ['latin'],
-  weight: ['400', '500', '700'],
-  variable: '--font-noto-sans-jp',
-  display: 'swap',
-  preload: false,
-});
-const notoSerifJp = Noto_Serif_JP({
-  subsets: ['latin'],
-  weight: ['400', '500', '700'],
-  variable: '--font-noto-serif-jp',
-  display: 'swap',
-  preload: false,
-});
-const jetbrainsMono = JetBrains_Mono({
-  subsets: ['latin'],
-  variable: '--font-jetbrains-mono',
-  display: 'swap',
-});
+// Google Fonts はビルド時に fonts.googleapis.com へのネットワークを要するため、
+// オフライン/Vercelのネットワーク制限などで "Load failed" / `Failed to fetch Inter` でビルドが落ちる。
+// システムフォントにフォールバックしつつ、CSS変数は空で定義して tailwind.config.ts の fontFamily が壊れないようにする。
+const inter = { variable: '--font-inter' } as const;
+const notoSansJp = { variable: '--font-noto-sans-jp' } as const;
+const notoSerifJp = { variable: '--font-noto-serif-jp' } as const;
+const jetbrainsMono = { variable: '--font-jetbrains-mono' } as const;
 
 export const metadata: Metadata = {
   title: 'Logical Vernacular | 現代文論理攻略',
@@ -35,7 +20,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html
       lang="ja"
-      className={cn(inter.variable, notoSansJp.variable, notoSerifJp.variable, jetbrainsMono.variable)}
+      className={[inter.variable, notoSansJp.variable, notoSerifJp.variable, jetbrainsMono.variable].join(' ')}
     >
       <body>
         <Providers>{children}</Providers>
