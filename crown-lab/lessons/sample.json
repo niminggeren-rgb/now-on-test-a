@@ -1,0 +1,280 @@
+{
+ "id": "sample",
+ "title": "サンプル: The Art of Forgetting",
+ "raw": "We tend to regard forgetting as a failure of the mind. Yet a growing body of research suggests that it is anything but a flaw. Without the ability to discard details, the brain would be overwhelmed by trivial information, and it would struggle to recognize the patterns that truly matter.\n\nConsider a person who could not forget a single thing. Far from being blessed, such a person would find it hard to think in general terms, since every experience would remain tied to its particular time and place. What makes us intelligent, then, may be not how much we remember but what we choose to let go.",
+ "paragraphs": [
+  {
+   "sentences": [
+    {
+     "en": "We tend to regard forgetting as a failure of the mind.",
+     "ja": "私たちは忘れることを、心の失敗だとみなしがちだ。",
+     "note": "S(We) V(tend to regard) O(forgetting) — regard A as B「AをBとみなす」。forgetting は動名詞で目的語。"
+    },
+    {
+     "en": "Yet a growing body of research suggests that it is anything but a flaw.",
+     "ja": "しかし、ますます多くの研究が、忘却は決して欠陥などではないことを示している。",
+     "note": "Yet は文頭の逆接「しかし」。S(a growing body of research) V(suggests) O(that節)。it = forgetting。anything but ~「決して~ではない」。"
+    },
+    {
+     "en": "Without the ability to discard details, the brain would be overwhelmed by trivial information, and it would struggle to recognize the patterns that truly matter.",
+     "ja": "細部を捨てる能力がなければ、脳はささいな情報に圧倒され、本当に重要なパターンを見抜くのに苦労するだろう。",
+     "note": "Without ~ が if節の代わりをする仮定法過去（主節 would be / would struggle）。to discard は ability を修飾する形容詞的用法。that truly matter は patterns を先行詞とする関係代名詞節。"
+    }
+   ]
+  },
+  {
+   "sentences": [
+    {
+     "en": "Consider a person who could not forget a single thing.",
+     "ja": "ただの一つも忘れることができない人を考えてみよう。",
+     "note": "命令文。who 以下は a person を修飾。not ... a single ~「ただ一つも~ない」で強い否定。"
+    },
+    {
+     "en": "Far from being blessed, such a person would find it hard to think in general terms, since every experience would remain tied to its particular time and place.",
+     "ja": "恵まれているどころか、そのような人は物事を一般化して考えるのが難しいと感じるだろう。というのも、あらゆる経験がその特定の時と場所に結びついたままになるからだ。",
+     "note": "Far from being ~「~どころか（正反対）」。find it hard to do：it は形式目的語、to think が真の目的語（SVOC）。since は理由「~なので」。remain tied to：remain C（過去分詞）。"
+    },
+    {
+     "en": "What makes us intelligent, then, may be not how much we remember but what we choose to let go.",
+     "ja": "だとすれば、私たちを賢くしているのは、どれだけ多く覚えているかではなく、何を手放すと選ぶかなのかもしれない。",
+     "note": "S(What makes us intelligent) V(may be) C(not A but B)。主語の What は関係代名詞「~するもの・こと」。make O C「OをCにする」。not A but B「AではなくB」で、A=how much節（間接疑問）、B=what節。then は挿入の「それなら」。"
+    }
+   ]
+  }
+ ],
+ "vocab": [
+  {
+   "w": "regard A as B",
+   "pos": "熟語",
+   "ja": "AをBとみなす",
+   "ex": "Many people regard him as a genius.",
+   "exja": "多くの人が彼を天才とみなしている。",
+   "note": "類: see/view/look on A as B",
+   "syn": "consider"
+  },
+  {
+   "w": "a growing body of",
+   "pos": "熟語",
+   "ja": "ますます多くの〜",
+   "ex": "A growing body of evidence supports the theory.",
+   "exja": "その理論を支持する証拠がますます増えている。",
+   "note": "body＝「（情報などの）集まり」",
+   "syn": ""
+  },
+  {
+   "w": "anything but",
+   "pos": "熟語",
+   "ja": "決して〜ではない",
+   "ex": "The task was anything but easy.",
+   "exja": "その仕事は決して簡単ではなかった。",
+   "note": "nothing but（〜だけ）と混同注意",
+   "syn": "far from"
+  },
+  {
+   "w": "flaw",
+   "pos": "名",
+   "ja": "欠陥、欠点",
+   "ex": "There is a serious flaw in the plan.",
+   "exja": "その計画には重大な欠陥がある。",
+   "note": "形 flawed / flawless",
+   "syn": "defect"
+  },
+  {
+   "w": "discard",
+   "pos": "動",
+   "ja": "捨てる、処分する",
+   "ex": "Discard any old files you no longer need.",
+   "exja": "もう不要な古いファイルは捨てなさい。",
+   "note": "アクセントは第2音節 dis-CARD",
+   "syn": "throw away"
+  },
+  {
+   "w": "overwhelm",
+   "pos": "動",
+   "ja": "圧倒する、参らせる",
+   "ex": "She was overwhelmed by the amount of work.",
+   "exja": "彼女は仕事量に圧倒された。",
+   "note": "形 overwhelming「圧倒的な」",
+   "syn": ""
+  },
+  {
+   "w": "trivial",
+   "pos": "形",
+   "ja": "ささいな、取るに足らない",
+   "ex": "Don't worry about such trivial matters.",
+   "exja": "そんなささいなことを気にするな。",
+   "note": "名 trivia",
+   "syn": "minor"
+  },
+  {
+   "w": "struggle to do",
+   "pos": "熟語",
+   "ja": "〜しようと苦労する",
+   "ex": "He struggled to keep his balance.",
+   "exja": "彼はバランスを保とうと必死だった。",
+   "note": "",
+   "syn": ""
+  },
+  {
+   "w": "recognize",
+   "pos": "動",
+   "ja": "認識する、見分ける",
+   "ex": "I didn't recognize her at first.",
+   "exja": "最初は彼女だと分からなかった。",
+   "note": "名 recognition",
+   "syn": "identify"
+  },
+  {
+   "w": "matter",
+   "pos": "動",
+   "ja": "重要である",
+   "ex": "It doesn't matter what others say.",
+   "exja": "他人が何と言おうと関係ない。",
+   "note": "自動詞。名詞「問題・物質」と区別",
+   "syn": "count"
+  },
+  {
+   "w": "blessed",
+   "pos": "形",
+   "ja": "恵まれた、幸運な",
+   "ex": "We are blessed with good weather.",
+   "exja": "私たちは好天に恵まれている。",
+   "note": "be blessed with ~ の形が頻出",
+   "syn": "fortunate"
+  },
+  {
+   "w": "in general terms",
+   "pos": "熟語",
+   "ja": "一般的に、大まかに",
+   "ex": "Let me explain it in general terms.",
+   "exja": "大まかに説明させてください。",
+   "note": "",
+   "syn": "broadly"
+  },
+  {
+   "w": "tied to",
+   "pos": "熟語",
+   "ja": "〜に結びついた",
+   "ex": "Your salary is tied to your performance.",
+   "exja": "給与は成績に連動している。",
+   "note": "",
+   "syn": "linked to"
+  },
+  {
+   "w": "let go",
+   "pos": "熟語",
+   "ja": "手放す、解放する",
+   "ex": "You need to let go of the past.",
+   "exja": "過去を手放す必要がある。",
+   "note": "let go of ~ の形が基本",
+   "syn": "release"
+  }
+ ],
+ "grammar": [
+  {
+   "name": "anything but ～「決して～ではない」",
+   "ex": "it is anything but a flaw",
+   "exp": "「〜以外なら何でも」→「〜だけは違う」と強い否定になる。nothing but ～（〜にすぎない）と対で覚える。"
+  },
+  {
+   "name": "Without ～ による仮定法過去",
+   "ex": "Without the ability to discard details, the brain would be overwhelmed",
+   "exp": "Without ～ が If it were not for ～ と同じ働き。主節が would + 原形なので「現在の事実に反する仮定」。But for ～ も同義。"
+  },
+  {
+   "name": "Far from ～ing「～どころか」",
+   "ex": "Far from being blessed, such a person would...",
+   "exp": "予想と正反対の事実を示す。far from は「決して〜ではない」の意味でも使う（far from perfect）。"
+  },
+  {
+   "name": "find it ＋形容詞＋ to do（形式目的語）",
+   "ex": "would find it hard to think in general terms",
+   "exp": "it は仮の目的語で、本当の目的語は to think 以下。SVOCの第5文型。make/think/consider も同じ形をとる。"
+  },
+  {
+   "name": "not A but B ＋ 名詞節",
+   "ex": "not how much we remember but what we choose to let go",
+   "exp": "A・Bに間接疑問（how much…）と関係代名詞 what節が並ぶ。両者が名詞節で品詞がそろっている点に注目。"
+  }
+ ],
+ "expr": [
+  {
+   "p": "tend to do",
+   "ja": "〜しがちである",
+   "use": "一般的な傾向を述べる。We tend to underestimate risks."
+  },
+  {
+   "p": "Consider ~.",
+   "ja": "〜を考えてみよう",
+   "use": "論説文で具体例を導入する定番の命令文。"
+  },
+  {
+   "p": "then（文中挿入）",
+   "ja": "それならば、つまり",
+   "use": "前の議論を受けて結論を導く。文頭でなく主語の後に挿入されることが多い。"
+  }
+ ],
+ "know": {
+  "summary": "忘却は脳の欠陥ではなく、不要な細部を捨てることで重要なパターンを見抜き、物事を一般化して考えるための仕組みである。",
+  "points": [
+   {
+    "h": "忘却の機能",
+    "b": "情報を取捨選択することで、脳は処理の負担を減らし本質的な規則性を抽出できる。"
+   },
+   {
+    "h": "超記憶の逆説",
+    "b": "すべてを覚えている人は経験を個別の場面から切り離せず、抽象的な思考が難しくなるとされる。"
+   },
+   {
+    "h": "論の展開",
+    "b": "通念の提示（忘却＝失敗）→反論（研究）→仮想例→結論（何を手放すかが知性）という典型的な論説構成。"
+   }
+  ]
+ },
+ "quiz": [
+  {
+   "q": "筆者の主張に最も近いものは？",
+   "choices": [
+    "記憶量が多いほど人は賢い",
+    "忘却は知的な思考を支える働きをもつ",
+    "忘却は治療すべき脳の欠陥だ",
+    "細部の記憶が一般化を助ける"
+   ],
+   "a": 1,
+   "exp": "最終文「何を手放すかが知性」に対応。"
+  },
+  {
+   "q": "The plan was ( ) perfect; it had many problems.",
+   "choices": [
+    "nothing but",
+    "anything but",
+    "all but",
+    "none but"
+   ],
+   "a": 1,
+   "exp": "anything but ＝ 決して〜ではない。"
+  },
+  {
+   "q": "( ) your help, I would have failed.",
+   "choices": [
+    "With",
+    "Without",
+    "Unless",
+    "Except"
+   ],
+   "a": 1,
+   "exp": "Without ～ ＝ If it had not been for ～（仮定法過去完了）。"
+  },
+  {
+   "q": "I found ( ) difficult to answer the question.",
+   "choices": [
+    "that",
+    "it",
+    "this",
+    "what"
+   ],
+   "a": 1,
+   "exp": "形式目的語 it。"
+  }
+ ]
+}

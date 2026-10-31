@@ -1,0 +1,626 @@
+<!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#070b14"><meta name="apple-mobile-web-app-capable" content="yes"><style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style></head><body><title>CROWN 攻略ラボ</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+/* Layout: aurora canvas behind a single centered study column; sticky tab rail; glass panels only where an object needs separating */
+:root{
+  --night:#070b14; --ink:#e9eef7; --mute:#93a0b8; --line:rgba(170,200,255,.14);
+  --glass:rgba(16,24,40,.62); --glass2:rgba(24,34,56,.72);
+  --aurora:#38e0b0; --amber:#ffb86b; --rose:#ff7a90; --sky:#7cc4ff;
+  --good:#4ade80; --warn:#fbbf24; --bad:#f87171;
+  --f-disp:"Bricolage Grotesque","Zen Kaku Gothic New",system-ui,sans-serif;
+  --f-body:"Zen Kaku Gothic New","Hiragino Sans","Noto Sans JP",system-ui,sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{min-height:100%}
+body{background:var(--night);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.75;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 60px}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:30;background:var(--night)}
+#bg{position:fixed;inset:0;width:100%;height:100%;z-index:0;pointer-events:none;
+  background:radial-gradient(60% 40% at 30% 10%,rgba(56,224,176,.25),transparent 70%),radial-gradient(50% 35% at 80% 5%,rgba(255,184,107,.15),transparent 70%),var(--night)}
+.wrap{position:relative;z-index:1;max-width:820px;margin:0 auto}
+button,input,textarea,select{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--aurora);outline-offset:2px}
+
+/* hero */
+header.hero{padding-block:28px 14px;display:grid;gap:10px}
+.eyebrow{font-family:var(--f-mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--aurora)}
+h1{font-family:var(--f-disp);font-weight:800;font-size:clamp(32px,7vw,54px);line-height:1.05;margin:0;letter-spacing:-.02em;text-wrap:balance}
+h1 .ch{display:inline-block;animation:blurIn .7s cubic-bezier(.2,.7,.2,1) both}
+@keyframes blurIn{from{opacity:.15;filter:blur(8px);transform:translateY(10px)}to{opacity:1;filter:none;transform:none}}
+.shiny{background:linear-gradient(110deg,var(--ink) 35%,var(--aurora) 50%,var(--ink) 65%);background-size:250% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:shine 5s linear infinite}
+@keyframes shine{from{background-position:120% 0}to{background-position:-120% 0}}
+.lessonbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.lessonbar select{flex:1 1 220px;min-width:0;background:var(--glass2);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+.stats{display:flex;gap:16px;flex-wrap:wrap;font-family:var(--f-mono);font-size:12px;color:var(--mute);font-variant-numeric:tabular-nums}
+.stats b{color:var(--ink);font-weight:500}
+.meter{height:6px;border-radius:6px;background:rgba(255,255,255,.08);overflow:hidden}
+.meter i{display:block;height:100%;background:linear-gradient(90deg,var(--aurora),var(--amber));transition:width .5s}
+
+/* glow button (uiverse style rotating border) */
+.gbtn{position:relative;border:0;border-radius:12px;padding:10px 16px;background:#0d1424;font-weight:700;isolation:isolate;overflow:hidden;white-space:nowrap}
+.gbtn::before{content:"";position:absolute;inset:-150%;z-index:-2;background:conic-gradient(from 0deg,var(--aurora),var(--sky),var(--amber),var(--rose),var(--aurora));animation:spin 4s linear infinite}
+.gbtn::after{content:"";position:absolute;inset:1.5px;border-radius:10.5px;background:#0d1424;z-index:-1;transition:background .2s}
+.gbtn:hover::after{background:#14203a}
+.gbtn:disabled{opacity:.5;cursor:wait}
+@keyframes spin{to{transform:rotate(1turn)}}
+.btn{border:1px solid var(--line);background:var(--glass2);border-radius:10px;padding:8px 14px;font-weight:500;transition:transform .15s,background .2s,border-color .2s}
+.btn:hover{border-color:rgba(56,224,176,.5);background:rgba(56,224,176,.08)}
+.btn:active{transform:scale(.97)}
+.btn.pri{background:var(--aurora);color:#04211a;border-color:transparent;font-weight:700}
+.btn.sm{padding:4px 10px;font-size:13px}
+
+/* tabs */
+nav.tabs{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;margin-block:10px 18px;padding-block:8px;background:linear-gradient(var(--night) 70%,transparent)}
+.tabrail{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none;padding:4px;border:1px solid var(--line);border-radius:14px;background:var(--glass);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);position:relative}
+.tabrail::-webkit-scrollbar{display:none}
+.tab{flex:0 0 auto;border:0;background:none;padding:8px 14px;border-radius:10px;color:var(--mute);font-weight:500;font-size:14px;position:relative;z-index:1;transition:color .2s}
+.tab[aria-selected="true"]{color:#04211a}
+.pill{position:absolute;top:4px;bottom:4px;border-radius:10px;background:var(--aurora);transition:left .35s cubic-bezier(.3,1.3,.5,1),width .35s cubic-bezier(.3,1.3,.5,1);z-index:0;box-shadow:0 0 18px rgba(56,224,176,.45)}
+
+/* panels */
+.panel{animation:fadeUp .4s ease both}
+@keyframes fadeUp{from{opacity:.3;transform:translateY(8px)}to{opacity:1;transform:none}}
+.card{position:relative;background:var(--glass);border:1px solid var(--line);border-radius:16px;padding:18px;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);overflow:hidden}
+.spot::before{content:"";position:absolute;inset:0;pointer-events:none;background:radial-gradient(260px circle at var(--mx,50%) var(--my,50%),rgba(56,224,176,.12),transparent 60%);opacity:0;transition:opacity .3s}
+.spot:hover::before{opacity:1}
+.stack{display:grid;gap:14px}
+h2{font-family:var(--f-disp);font-weight:700;font-size:22px;margin:0;letter-spacing:-.01em}
+h3{font-size:16px;margin:0}
+.lbl{font-family:var(--f-mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--mute)}
+.muted{color:var(--mute)}
+.tag{display:inline-block;font-family:var(--f-mono);font-size:11px;padding:1px 8px;border-radius:99px;border:1px solid var(--line);color:var(--sky)}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.sp{flex:1}
+
+/* reading */
+.para{display:grid;gap:4px}
+.para .pn{font-family:var(--f-mono);font-size:11px;color:var(--amber)}
+.en{font-family:var(--f-disp);font-size:18px;line-height:1.9;font-weight:500}
+.sent{cursor:pointer;border-radius:4px;transition:background .2s}
+.sent:hover{background:rgba(124,196,255,.08)}
+.sent.on{background:rgba(56,224,176,.13)}
+.vw{border-bottom:1.5px dashed var(--amber);cursor:help}
+.vw.known{border-bottom-color:rgba(74,222,128,.6)}
+.gloss{margin:6px 0 10px;padding:12px 14px;border-left:3px solid var(--aurora);background:rgba(56,224,176,.06);border-radius:0 10px 10px 0;font-size:14px;display:grid;gap:6px}
+.gloss .ja{font-size:15px}
+.toggles{display:flex;gap:6px;flex-wrap:wrap}
+.toggles .btn[aria-pressed="true"]{border-color:var(--aurora);color:var(--aurora)}
+
+/* flashcards */
+.flip{perspective:1200px;height:260px;cursor:pointer}
+.flip-in{position:relative;width:100%;height:100%;transition:transform .6s cubic-bezier(.3,1.2,.4,1);transform-style:preserve-3d}
+.flip.flipped .flip-in{transform:rotateY(180deg)}
+.face{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;border-radius:18px;border:1px solid var(--line);display:grid;place-items:center;text-align:center;padding:20px;
+  background:radial-gradient(120% 90% at 0% 0%,rgba(56,224,176,.16),transparent 60%),var(--glass2)}
+.face.back{transform:rotateY(180deg);background:radial-gradient(120% 90% at 100% 100%,rgba(255,184,107,.15),transparent 60%),var(--glass2);place-items:stretch;text-align:left;overflow:auto}
+.big{font-family:var(--f-disp);font-size:clamp(28px,6vw,40px);font-weight:700}
+.vlist{display:grid;gap:8px}
+.vitem{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:start;padding:10px 12px;border-radius:12px;border:1px solid var(--line);background:var(--glass)}
+.vitem>div{min-width:0}
+.dot{width:10px;height:10px;border-radius:50%;margin-top:8px;background:var(--mute)}
+.dot.s1{background:var(--warn)}.dot.s2{background:var(--good)}
+.vw-word{font-family:var(--f-disp);font-weight:700;font-size:17px}
+
+/* grammar/expr */
+.gitem{display:grid;gap:6px}
+.ex{font-family:var(--f-disp);font-style:normal;background:rgba(124,196,255,.07);padding:8px 12px;border-radius:10px;font-size:15px}
+mark{background:rgba(255,184,107,.25);color:inherit;border-radius:3px;padding:0 2px}
+
+/* quiz */
+.choice{display:block;width:100%;text-align:left;border:1px solid var(--line);background:var(--glass2);border-radius:12px;padding:10px 14px;margin-top:8px;transition:border-color .2s,background .2s}
+.choice:hover{border-color:var(--sky)}
+.choice.ok{border-color:var(--good);background:rgba(74,222,128,.12)}
+.choice.ng{border-color:var(--bad);background:rgba(248,113,113,.12)}
+textarea,input[type=text]{width:100%;background:rgba(5,9,18,.6);border:1px solid var(--line);border-radius:12px;padding:10px 12px;resize:vertical}
+.score{font-family:var(--f-disp);font-size:36px;font-weight:800;color:var(--aurora);font-variant-numeric:tabular-nums}
+
+/* chat */
+.chat{display:grid;gap:10px;max-height:56vh;overflow-y:auto;padding-right:4px}
+.msg{padding:10px 14px;border-radius:14px;max-width:92%;white-space:pre-wrap;word-break:break-word;font-size:14.5px}
+.msg.u{justify-self:end;background:rgba(56,224,176,.16);border:1px solid rgba(56,224,176,.3)}
+.msg.a{justify-self:start;background:var(--glass2);border:1px solid var(--line)}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{border:1px solid var(--line);background:none;border-radius:99px;padding:4px 12px;font-size:13px;color:var(--sky)}
+.chip:hover{background:rgba(124,196,255,.1)}
+
+/* sheet */
+.sheet-bg{position:fixed;inset:0;z-index:40;background:rgba(2,5,12,.6);backdrop-filter:blur(4px)}
+.sheet{position:fixed;z-index:41;left:50%;bottom:0;transform:translateX(-50%);width:min(760px,100%);max-height:88vh;overflow:auto;background:#0b1222;border:1px solid var(--line);border-radius:20px 20px 0 0;
+  padding:20px max(16px,env(safe-area-inset-right,0px)) calc(20px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));display:grid;gap:12px;animation:up .35s cubic-bezier(.2,.9,.3,1)}
+@keyframes up{from{transform:translate(-50%,40px);opacity:.4}}
+.prog{font-family:var(--f-mono);font-size:12px;color:var(--aurora)}
+.loader{display:inline-block;width:14px;height:14px;border-radius:50%;border:2px solid var(--aurora);border-right-color:transparent;animation:spin .7s linear infinite;vertical-align:-2px}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:50;background:#13203a;border:1px solid var(--aurora);padding:8px 16px;border-radius:99px;font-size:14px}
+.empty{text-align:center;padding:28px 16px}
+/* ===== Glass 2.0：多層ガラス・発光エッジ・ノイズ ===== */
+body::after{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.08;mix-blend-mode:overlay;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
+.card,.tabrail,.face,.np{--edge:linear-gradient(150deg,rgba(255,255,255,.42),rgba(255,255,255,.07) 32%,rgba(255,255,255,.02) 62%,rgba(56,224,176,.32));border-color:transparent;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.16),inset 0 -1px 0 rgba(255,255,255,.03),0 26px 60px -30px rgba(0,0,0,.8),0 2px 8px -2px rgba(0,0,0,.35)}
+.card,.tabrail,.np{background:linear-gradient(165deg,rgba(255,255,255,.09),rgba(255,255,255,.02) 45%,rgba(255,255,255,.045)),rgba(12,18,32,.4);backdrop-filter:blur(24px) saturate(175%);-webkit-backdrop-filter:blur(24px) saturate(175%)}
+.card::after,.tabrail::after,.face::after,.np::after{content:"";position:absolute;inset:0;border-radius:inherit;padding:1px;background:var(--edge);-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;pointer-events:none}
+.card{transition:transform .35s cubic-bezier(.2,.8,.2,1),box-shadow .35s}
+.card.spot:hover{transform:translateY(-2px);box-shadow:inset 0 1px 0 rgba(255,255,255,.2),0 34px 70px -30px rgba(0,0,0,.85),0 0 0 1px rgba(56,224,176,.12)}
+.btn,.choice,.vitem{background:linear-gradient(180deg,rgba(255,255,255,.09),rgba(255,255,255,.025)),rgba(12,18,32,.35);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);box-shadow:inset 0 1px 0 rgba(255,255,255,.13)}
+.sheet{background:linear-gradient(170deg,rgba(255,255,255,.1),rgba(255,255,255,.02) 40%),rgba(9,14,26,.82);backdrop-filter:blur(30px) saturate(180%);-webkit-backdrop-filter:blur(30px) saturate(180%);border-color:rgba(255,255,255,.18);box-shadow:inset 0 1px 0 rgba(255,255,255,.2),0 -30px 80px -20px rgba(0,0,0,.7)}
+.pill{background:linear-gradient(180deg,#6ff0c8,var(--aurora));box-shadow:inset 0 1px 0 rgba(255,255,255,.6),0 0 22px rgba(56,224,176,.5)}
+.np{position:fixed;z-index:35;left:50%;transform:translateX(-50%);bottom:calc(14px + env(safe-area-inset-bottom,0px));width:min(760px,calc(100% - 32px));border-radius:18px;padding:10px 12px 10px 16px;display:flex;gap:12px;align-items:center;animation:up .35s cubic-bezier(.2,.9,.3,1)}
+.np .t{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-family:var(--f-disp)}
+.eq{display:flex;gap:2px;align-items:end;height:16px}.eq i{width:3px;background:var(--aurora);border-radius:2px;animation:eq 1s ease-in-out infinite}.eq i:nth-child(2){animation-delay:-.3s}.eq i:nth-child(3){animation-delay:-.6s}
+@keyframes eq{0%,100%{height:4px}50%{height:16px}}
+.sent.playing{background:rgba(255,184,107,.16);box-shadow:0 0 0 1px rgba(255,184,107,.35)}
+.thumbs{display:flex;gap:8px;flex-wrap:wrap}.thumbs figure{margin:0;position:relative;width:76px;height:96px;border-radius:10px;overflow:hidden;border:1px solid var(--line)}
+.thumbs img{width:100%;height:100%;object-fit:cover}.thumbs button{position:absolute;top:3px;right:3px;border:0;border-radius:50%;width:22px;height:22px;background:rgba(0,0,0,.65);font-size:12px;line-height:1}
+input[type=password],.sheet select{width:100%;background:rgba(5,9,18,.6);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+.icon{padding:10px 13px}
+.drop{border:1.5px dashed rgba(124,196,255,.35);border-radius:14px;padding:12px;display:grid;gap:8px}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
+</style>
+
+<canvas id="bg" aria-hidden="true"></canvas>
+<div class="wrap">
+  <header class="hero">
+    <div class="eyebrow">English Communication Ⅲ · Advanced</div>
+    <h1 id="h1">CROWN 攻略ラボ</h1>
+    <div class="lessonbar">
+      <select id="lessonSel" aria-label="レッスンを選ぶ"></select>
+      <button class="gbtn" id="addBtn">＋ 本文を追加</button>
+      <button class="btn icon" data-act="cfg" aria-label="設定">⚙</button>
+    </div>
+    <div class="stats" id="stats"></div>
+    <div class="meter" aria-hidden="true"><i id="meterBar" style="width:0"></i></div>
+  </header>
+  <nav class="tabs" aria-label="学習モード">
+    <div class="tabrail" role="tablist" id="tabrail"><span class="pill" id="pill"></span></div>
+  </nav>
+  <main id="main"></main>
+</div>
+<div id="sheetRoot"></div>
+<div class="np" id="np" hidden><span class="eq" aria-hidden="true"><i></i><i></i><i></i></span><span class="t" id="npT"></span><button class="btn sm" data-act="stopNP">停止</button></div>
+
+<script>
+/* ===== 状態管理 ===== */
+const KEY='crownlab.v1';
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const $=s=>document.querySelector(s);
+const uid=()=>Math.random().toString(36).slice(2,9);
+
+const SAMPLE={id:'sample',title:'サンプル: The Art of Forgetting',sample:true,
+ raw:`We tend to regard forgetting as a failure of the mind. Yet a growing body of research suggests that it is anything but a flaw. Without the ability to discard details, the brain would be overwhelmed by trivial information, and it would struggle to recognize the patterns that truly matter.\n\nConsider a person who could not forget a single thing. Far from being blessed, such a person would find it hard to think in general terms, since every experience would remain tied to its particular time and place. What makes us intelligent, then, may be not how much we remember but what we choose to let go.`,
+ paragraphs:[{sentences:[
+  {en:'We tend to regard forgetting as a failure of the mind.',ja:'私たちは忘れることを、心の失敗だとみなしがちだ。',note:'S(We) V(tend to regard) O(forgetting) — regard A as B「AをBとみなす」。forgetting は動名詞で目的語。'},
+  {en:'Yet a growing body of research suggests that it is anything but a flaw.',ja:'しかし、ますます多くの研究が、忘却は決して欠陥などではないことを示している。',note:'Yet は文頭の逆接「しかし」。S(a growing body of research) V(suggests) O(that節)。it = forgetting。anything but ~「決して~ではない」。'},
+  {en:'Without the ability to discard details, the brain would be overwhelmed by trivial information, and it would struggle to recognize the patterns that truly matter.',ja:'細部を捨てる能力がなければ、脳はささいな情報に圧倒され、本当に重要なパターンを見抜くのに苦労するだろう。',note:'Without ~ が if節の代わりをする仮定法過去（主節 would be / would struggle）。to discard は ability を修飾する形容詞的用法。that truly matter は patterns を先行詞とする関係代名詞節。'}
+ ]},{sentences:[
+  {en:'Consider a person who could not forget a single thing.',ja:'ただの一つも忘れることができない人を考えてみよう。',note:'命令文。who 以下は a person を修飾。not ... a single ~「ただ一つも~ない」で強い否定。'},
+  {en:'Far from being blessed, such a person would find it hard to think in general terms, since every experience would remain tied to its particular time and place.',ja:'恵まれているどころか、そのような人は物事を一般化して考えるのが難しいと感じるだろう。というのも、あらゆる経験がその特定の時と場所に結びついたままになるからだ。',note:'Far from being ~「~どころか（正反対）」。find it hard to do：it は形式目的語、to think が真の目的語（SVOC）。since は理由「~なので」。remain tied to：remain C（過去分詞）。'},
+  {en:'What makes us intelligent, then, may be not how much we remember but what we choose to let go.',ja:'だとすれば、私たちを賢くしているのは、どれだけ多く覚えているかではなく、何を手放すと選ぶかなのかもしれない。',note:'S(What makes us intelligent) V(may be) C(not A but B)。主語の What は関係代名詞「~するもの・こと」。make O C「OをCにする」。not A but B「AではなくB」で、A=how much節（間接疑問）、B=what節。then は挿入の「それなら」。'}
+ ]}],
+ vocab:[
+  {w:'regard A as B',pos:'熟語',ja:'AをBとみなす',ex:'Many people regard him as a genius.',exja:'多くの人が彼を天才とみなしている。',note:'類: see/view/look on A as B',syn:'consider'},
+  {w:'a growing body of',pos:'熟語',ja:'ますます多くの〜',ex:'A growing body of evidence supports the theory.',exja:'その理論を支持する証拠がますます増えている。',note:'body＝「（情報などの）集まり」',syn:''},
+  {w:'anything but',pos:'熟語',ja:'決して〜ではない',ex:'The task was anything but easy.',exja:'その仕事は決して簡単ではなかった。',note:'nothing but（〜だけ）と混同注意',syn:'far from'},
+  {w:'flaw',pos:'名',ja:'欠陥、欠点',ex:'There is a serious flaw in the plan.',exja:'その計画には重大な欠陥がある。',note:'形 flawed / flawless',syn:'defect'},
+  {w:'discard',pos:'動',ja:'捨てる、処分する',ex:'Discard any old files you no longer need.',exja:'もう不要な古いファイルは捨てなさい。',note:'アクセントは第2音節 dis-CARD',syn:'throw away'},
+  {w:'overwhelm',pos:'動',ja:'圧倒する、参らせる',ex:'She was overwhelmed by the amount of work.',exja:'彼女は仕事量に圧倒された。',note:'形 overwhelming「圧倒的な」',syn:''},
+  {w:'trivial',pos:'形',ja:'ささいな、取るに足らない',ex:'Don\'t worry about such trivial matters.',exja:'そんなささいなことを気にするな。',note:'名 trivia',syn:'minor'},
+  {w:'struggle to do',pos:'熟語',ja:'〜しようと苦労する',ex:'He struggled to keep his balance.',exja:'彼はバランスを保とうと必死だった。',note:'',syn:''},
+  {w:'recognize',pos:'動',ja:'認識する、見分ける',ex:'I didn\'t recognize her at first.',exja:'最初は彼女だと分からなかった。',note:'名 recognition',syn:'identify'},
+  {w:'matter',pos:'動',ja:'重要である',ex:'It doesn\'t matter what others say.',exja:'他人が何と言おうと関係ない。',note:'自動詞。名詞「問題・物質」と区別',syn:'count'},
+  {w:'blessed',pos:'形',ja:'恵まれた、幸運な',ex:'We are blessed with good weather.',exja:'私たちは好天に恵まれている。',note:'be blessed with ~ の形が頻出',syn:'fortunate'},
+  {w:'in general terms',pos:'熟語',ja:'一般的に、大まかに',ex:'Let me explain it in general terms.',exja:'大まかに説明させてください。',note:'',syn:'broadly'},
+  {w:'tied to',pos:'熟語',ja:'〜に結びついた',ex:'Your salary is tied to your performance.',exja:'給与は成績に連動している。',note:'',syn:'linked to'},
+  {w:'let go',pos:'熟語',ja:'手放す、解放する',ex:'You need to let go of the past.',exja:'過去を手放す必要がある。',note:'let go of ~ の形が基本',syn:'release'}
+ ],
+ grammar:[
+  {name:'anything but ～「決して～ではない」',ex:'it is anything but a flaw',exp:'「〜以外なら何でも」→「〜だけは違う」と強い否定になる。nothing but ～（〜にすぎない）と対で覚える。'},
+  {name:'Without ～ による仮定法過去',ex:'Without the ability to discard details, the brain would be overwhelmed',exp:'Without ～ が If it were not for ～ と同じ働き。主節が would + 原形なので「現在の事実に反する仮定」。But for ～ も同義。'},
+  {name:'Far from ～ing「～どころか」',ex:'Far from being blessed, such a person would...',exp:'予想と正反対の事実を示す。far from は「決して〜ではない」の意味でも使う（far from perfect）。'},
+  {name:'find it ＋形容詞＋ to do（形式目的語）',ex:'would find it hard to think in general terms',exp:'it は仮の目的語で、本当の目的語は to think 以下。SVOCの第5文型。make/think/consider も同じ形をとる。'},
+  {name:'not A but B ＋ 名詞節',ex:'not how much we remember but what we choose to let go',exp:'A・Bに間接疑問（how much…）と関係代名詞 what節が並ぶ。両者が名詞節で品詞がそろっている点に注目。'}
+ ],
+ expr:[
+  {p:'tend to do',ja:'〜しがちである',use:'一般的な傾向を述べる。We tend to underestimate risks.'},
+  {p:'Consider ~.',ja:'〜を考えてみよう',use:'論説文で具体例を導入する定番の命令文。'},
+  {p:'then（文中挿入）',ja:'それならば、つまり',use:'前の議論を受けて結論を導く。文頭でなく主語の後に挿入されることが多い。'}
+ ],
+ know:{summary:'忘却は脳の欠陥ではなく、不要な細部を捨てることで重要なパターンを見抜き、物事を一般化して考えるための仕組みである。',points:[
+  {h:'忘却の機能',b:'情報を取捨選択することで、脳は処理の負担を減らし本質的な規則性を抽出できる。'},
+  {h:'超記憶の逆説',b:'すべてを覚えている人は経験を個別の場面から切り離せず、抽象的な思考が難しくなるとされる。'},
+  {h:'論の展開',b:'通念の提示（忘却＝失敗）→反論（研究）→仮想例→結論（何を手放すかが知性）という典型的な論説構成。'}
+ ]},
+ quiz:[
+  {q:'筆者の主張に最も近いものは？',choices:['記憶量が多いほど人は賢い','忘却は知的な思考を支える働きをもつ','忘却は治療すべき脳の欠陥だ','細部の記憶が一般化を助ける'],a:1,exp:'最終文「何を手放すかが知性」に対応。'},
+  {q:'The plan was ( ) perfect; it had many problems.',choices:['nothing but','anything but','all but','none but'],a:1,exp:'anything but ＝ 決して〜ではない。'},
+  {q:'( ) your help, I would have failed.',choices:['With','Without','Unless','Except'],a:1,exp:'Without ～ ＝ If it had not been for ～（仮定法過去完了）。'},
+  {q:'I found ( ) difficult to answer the question.',choices:['that','it','this','what'],a:1,exp:'形式目的語 it。'}
+ ],
+ st:{}
+};
+
+let S={lessons:[SAMPLE],cur:'sample',tab:'read',chat:{}};
+try{const d=JSON.parse(localStorage.getItem(KEY)||'null');if(d&&d.lessons?.length)S=d;}catch(e){}
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}};
+const L=()=>S.lessons.find(l=>l.id===S.cur)||S.lessons[0];
+
+/* ===== 設定 ===== */
+const CK='crownlab.cfg';
+let CFG={voice:'',rate:.95,antKey:'',model:'claude-sonnet-5-5',oaKey:'',oaVoice:'nova'};
+try{Object.assign(CFG,JSON.parse(localStorage.getItem(CK)||'{}'))}catch(e){}
+const saveCfg=()=>{try{localStorage.setItem(CK,JSON.stringify(CFG))}catch(e){}};
+const NOAI='<p class="muted">AI機能は claude.ai 上で開くか、⚙設定でAPIキーを入れると使えます。</p>';
+
+/* ===== IndexedDB（音声ファイル保存） ===== */
+const idb=(()=>{let p;const open=()=>p||(p=new Promise((res,rej)=>{const r=indexedDB.open('crownlab',1);r.onupgradeneeded=()=>r.result.createObjectStore('kv');r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)}));
+ const tx=async(m,f)=>{const d=await open();return new Promise((res,rej)=>{const q=f(d.transaction('kv',m).objectStore('kv'));q.onsuccess=()=>res(q.result);q.onerror=()=>rej(q.error)})};
+ return{get:k=>tx('readonly',s=>s.get(k)).catch(()=>null),set:(k,v)=>tx('readwrite',s=>s.put(v,k)).catch(()=>null),del:k=>tx('readwrite',s=>s.delete(k)).catch(()=>null)}})();
+
+/* ===== AI（claude.ai → sample / Web → Anthropic APIキー） ===== */
+let AIs=null,AIimg=false;
+(async()=>{try{AIs=await window.claude?.use?.('sample');if(AIs)AIimg=!!(await AIs.limits?.())?.images}catch(e){AIs=null}render()})();
+const parseJ=t=>{const s=t.replace(/```json|```/g,'');return JSON.parse(s.slice(s.indexOf('{'),s.lastIndexOf('}')+1))};
+async function api(content,sys){
+  const messages=Array.isArray(content)&&content[0]?.role?content:[{role:'user',content}];
+  const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'content-type':'application/json','x-api-key':CFG.antKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+    body:JSON.stringify({model:CFG.model||'claude-sonnet-5-5',max_tokens:8000,...(sys?{system:sys}:{}),messages})});
+  const j=await r.json().catch(()=>({}));if(!r.ok)throw{code:r.status===429?'rate_limited':'api',message:j?.error?.message||r.status};
+  return (j.content||[]).map(c=>c.text||'').join('')}
+const OCR_PROMPT='これは高校英語教科書のページの写真です。英語の本文だけを一字一句正確に書き起こしてください。段落の区切りは空行。行末ハイフンで分かれた単語は結合。ページ番号・見出しの番号・脚注・語注・設問・日本語・イラスト内の文字は除外。説明や前置きは書かず、本文テキストのみを出力。';
+const ai={
+  ok:()=>!!AIs||!!CFG.antKey,
+  async chat(msgs,sys,onText){
+    if(AIs)return(await AIs([{role:'user',content:sys+'\n\n了解したら次の質問に答えてください。'},{role:'assistant',content:'了解しました。'},...msgs],{cache:false,modelTier:'default',onText})).text;
+    const t=await api(msgs,sys);onText?.({text:t});return t},
+  async json(p,tier='complex'){if(AIs)return AIs.json(p,{modelTier:tier,cache:false});return parseJ(await api(p+'\n\nJSONのみを出力。'))},
+  async ocr(blob){
+    if(AIs){if(!AIimg)throw{code:'images_unavailable'};return(await AIs(OCR_PROMPT,{images:[blob],modelTier:'default'})).text}
+    const b64=await new Promise(r=>{const f=new FileReader();f.onload=()=>r(String(f.result).split(',')[1]);f.readAsDataURL(blob)});
+    return api([{type:'image',source:{type:'base64',media_type:blob.type||'image/jpeg',data:b64}},{type:'text',text:OCR_PROMPT}])}
+};
+async function shrink(file){try{const b=await createImageBitmap(file);const k=Math.min(1,2000/Math.max(b.width,b.height));const c=document.createElement('canvas');c.width=b.width*k|0;c.height=b.height*k|0;c.getContext('2d').drawImage(b,0,0,c.width,c.height);return await new Promise(r=>c.toBlob(r,'image/jpeg',.86))}catch(e){return file}}
+
+/* ===== 音声：収録ファイル → 保存済みAI音声 → OpenAI TTS(Web) → 端末の最良の女性音声 ===== */
+const norm=t=>String(t).replace(/\s+/g,' ').trim();
+const fnv=t=>{let h=0x811c9dc5;for(const b of new TextEncoder().encode(norm(t))){h^=b;h=Math.imul(h,16777619)>>>0}return h.toString(16).padStart(8,'0')};
+let AUD=new Set();fetch('audio/index.json').then(r=>r.ok?r.json():[]).then(a=>{AUD=new Set(a)}).catch(()=>{});
+const FEM=/female|samantha|ava|allison|susan|zira|jenny|aria|emma|michelle|sonia|libby|natasha|karen|serena|moira|tessa|kate|joanna|salli|kendra|kimberly|ivy|nicole|ruth|google us english/i,HQ=/natural|neural|online|premium|enhanced|siri/i;
+const vScore=v=>(HQ.test(v.name)?4:0)+(FEM.test(v.name)?3:0)+(/en[-_]US/i.test(v.lang)?1:0)+(/google|microsoft/i.test(v.name)?1:0);
+const enVoices=()=>{try{return speechSynthesis.getVoices().filter(v=>/^en/i.test(v.lang)).sort((a,b)=>vScore(b)-vScore(a))}catch(e){return[]}};
+const player=new Audio();let playTok=0,unlocked=false;
+addEventListener('pointerdown',()=>{if(unlocked)return;unlocked=true;try{player.src='data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=';player.play().catch(()=>{})}catch(e){}},{once:true});
+function stopAudio(){playTok++;player.pause();try{speechSynthesis.cancel()}catch(e){}np(null)}
+async function srcFor(t){const h=fnv(t);if(AUD.has(h))return'audio/'+h+'.mp3';
+  const c=await idb.get('tts:'+h);if(c)return URL.createObjectURL(c);
+  if(CFG.oaKey){try{const r=await fetch('https://api.openai.com/v1/audio/speech',{method:'POST',headers:{'content-type':'application/json',authorization:'Bearer '+CFG.oaKey},
+    body:JSON.stringify({model:'gpt-4o-mini-tts',voice:CFG.oaVoice||'nova',input:norm(t),instructions:'Warm, clear, natural American English, like a professional textbook narrator.'})});
+    if(r.ok){const b=await r.blob();idb.set('tts:'+h,b);return URL.createObjectURL(b)}}catch(e){}}
+  return null}
+function playOne(t,tok){return new Promise(async res=>{const src=await srcFor(t);if(tok!==playTok)return res();
+  if(src){player.src=src;player.playbackRate=CFG.rate;player.onended=player.onerror=()=>res();player.play().catch(()=>res());return}
+  try{const u=new SpeechSynthesisUtterance(norm(t));u.lang='en-US';u.rate=CFG.rate;const v=enVoices();u.voice=v.find(x=>x.name===CFG.voice)||v[0]||null;u.onend=u.onerror=()=>res();speechSynthesis.cancel();speechSynthesis.speak(u)}catch(e){res()}})}
+async function speak(t){stopAudio();const tok=playTok;np({t});await playOne(t,tok);if(tok===playTok)np(null)}
+async function readAll(l){stopAudio();const tok=playTok;
+  for(const s of l.paragraphs.flatMap((p,pi)=>p.sentences.map((s,si)=>({k:pi+'-'+si,t:s.en})))){if(tok!==playTok)return;np(s);await playOne(s.t,tok)}
+  if(tok===playTok)np(null)}
+let npKey=null;
+function np(s){npKey=s?.k||null;document.querySelectorAll('.sent.playing').forEach(e=>e.classList.remove('playing'));
+  if(npKey){const e=document.querySelector(`.sent[data-s="${npKey}"]`);e?.classList.add('playing');e?.scrollIntoView({block:'center',behavior:'smooth'})}
+  const b=$('#np');if(!b)return;b.hidden=!s;if(s)$('#npT').textContent=norm(s.t)}
+
+function toast(t){const d=document.createElement('div');d.className='toast';d.textContent=t;document.body.append(d);setTimeout(()=>d.remove(),2200)}
+
+/* ===== タイトルのBlurText演出 ===== */
+(()=>{const h=$('#h1');const t=h.textContent;h.innerHTML=[...t].map((c,i)=>c===' '?' ':`<span class="ch" style="animation-delay:${i*40}ms">${esc(c)}</span>`).join('');
+ h.querySelectorAll('.ch').forEach((s,i)=>{if(i>=6)s.classList.add('shiny')});})();
+
+/* ===== タブ ===== */
+const TABS=[['read','本文'],['vocab','単語'],['grammar','文法'],['expr','表現'],['know','内容・知識'],['test','テスト'],['ask','AI質問']];
+$('#tabrail').insertAdjacentHTML('beforeend',TABS.map(([k,n])=>`<button class="tab" role="tab" data-tab="${k}" aria-selected="false">${n}</button>`).join(''));
+function movePill(){const b=document.querySelector(`.tab[data-tab="${S.tab}"]`);if(!b)return;const p=$('#pill');p.style.left=b.offsetLeft+'px';p.style.width=b.offsetWidth+'px';b.scrollIntoView({block:'nearest',inline:'nearest'})}
+addEventListener('resize',movePill);
+
+/* ===== 描画 ===== */
+function render(){
+  const l=L();
+  $('#lessonSel').innerHTML=S.lessons.map(x=>`<option value="${x.id}" ${x.id===l.id?'selected':''}>${esc(x.title)}</option>`).join('');
+  document.querySelectorAll('.tab').forEach(b=>b.setAttribute('aria-selected',b.dataset.tab===S.tab));
+  movePill();
+  const v=l.vocab||[],known=v.filter(x=>l.st?.[x.w]===2).length;
+  $('#stats').innerHTML=`<span>文 <b>${(l.paragraphs||[]).reduce((a,p)=>a+p.sentences.length,0)}</b></span><span>語句 <b>${v.length}</b></span><span>習得 <b>${known}</b>/${v.length}</span><span>文法 <b>${(l.grammar||[]).length}</b></span>${l.sample?'<span class="tag">サンプル教材</span>':''}`;
+  $('#meterBar').style.width=v.length?(known/v.length*100)+'%':'0';
+  const m=$('#main');
+  if(!l.paragraphs?.length&&S.tab!=='ask'){m.innerHTML=notBuilt(l);return}
+  m.innerHTML=`<section class="panel">${({read:vRead,vocab:vVocab,grammar:vGrammar,expr:vExpr,know:vKnow,test:vTest,ask:vAsk})[S.tab](l)}</section>`;
+  if(S.tab==='vocab')drawCard();
+  if(S.tab==='read')mountLap(l);
+  if(S.tab==='ask'){const c=$('#chat');if(c)c.scrollTop=c.scrollHeight}
+}
+function notBuilt(l){return `<div class="card empty stack"><h2>まだ教材化されていません</h2><p class="muted">本文を保存済みです。AIで和訳・構文・単語・文法・表現・知識・テストを生成します。</p><div><button class="gbtn" data-act="build">AIで教材化する</button></div>${ai.ok()?'':NOAI}<pre style="white-space:pre-wrap;text-align:left" class="muted">${esc(l.raw)}</pre></div>`}
+
+/* 本文 */
+let showJa=false,openS=null;
+function hlVocab(en,l){
+  let h=esc(en);
+  (l.vocab||[]).map(v=>v.w).filter(w=>!/[~〜]/.test(w)).sort((a,b)=>b.length-a.length).forEach(w=>{
+    const core=w.replace(/\b(A|B|do|doing|one's)\b/g,'').trim().split(/\s+/)[0];if(!core||core.length<3)return;
+    const re=new RegExp(`\\b(${core.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')}\\w*)\\b(?![^<]*>)`,'i');
+    if(!h.includes(`data-w="${esc(w)}"`))h=h.replace(re,`<span class="vw ${l.st?.[w]===2?'known':''}" data-w="${esc(w)}">$1</span>`);
+  });return h;}
+function vRead(l){
+  return `<div class="stack"><div class="row"><span class="lbl">文をタップ → 和訳と構文解説 / 下線の語 → 意味</span><span class="sp"></span>
+  <div class="toggles"><button class="btn sm" data-act="toggleJa" aria-pressed="${showJa}">全訳表示</button><button class="btn sm" data-act="speakAll">▶ 全文音読</button></div></div>
+  <div id="lap"></div>
+  ${l.paragraphs.map((p,pi)=>`<div class="card spot para"><span class="pn">¶ ${pi+1}</span><div class="en">${p.sentences.map((s,si)=>{const k=pi+'-'+si;const on=openS===k;
+   return `<span class="sent ${on?'on':''}${npKey===k?' playing':''}" data-s="${k}">${hlVocab(s.en,l)}</span> ${on||showJa?`<div class="gloss"><div class="ja">${esc(s.ja)}</div>${on?`<div class="muted">${esc(s.note)}</div><div class="row"><button class="btn sm" data-act="say" data-t="${esc(s.en)}">▶ 発音</button><button class="btn sm" data-act="askS" data-t="${esc(s.en)}">この文をAIに質問</button></div>`:''}</div>`:''}`}).join('')}</div></div>`).join('')}</div>`;}
+
+/* 単語 */
+let vMode='en',vIdx=0,vFilter='todo';
+function vPool(l){const v=l.vocab||[];return vFilter==='all'?v:v.filter(x=>l.st?.[x.w]!==2)}
+function vVocab(l){
+  const v=l.vocab||[];
+  return `<div class="stack"><div class="row"><div class="toggles">
+  <button class="btn sm" data-act="vf" data-v="todo" aria-pressed="${vFilter==='todo'}">未習得</button><button class="btn sm" data-act="vf" data-v="all" aria-pressed="${vFilter==='all'}">すべて</button></div><span class="sp"></span>
+  <div class="toggles"><button class="btn sm" data-act="vm" data-v="en" aria-pressed="${vMode==='en'}">英→日</button><button class="btn sm" data-act="vm" data-v="ja" aria-pressed="${vMode==='ja'}">日→英</button></div></div>
+  <div id="cardBox"></div>
+  <div class="row"><span class="lbl">一覧</span><span class="sp"></span><span class="muted" style="font-size:12px">● 未学習 <span style="color:var(--warn)">●</span> 学習中 <span style="color:var(--good)">●</span> 習得</span></div>
+  <div class="vlist">${v.map(x=>`<div class="vitem"><span class="dot s${l.st?.[x.w]||0}"></span><div><div class="vw-word">${esc(x.w)} <span class="tag">${esc(x.pos)}</span></div><div>${esc(x.ja)}</div><div class="muted" style="font-size:13px">${esc(x.ex)}${x.note?' / '+esc(x.note):''}</div></div><button class="btn sm" data-act="say" data-t="${esc(x.w.replace(/\b[AB]\b|~|〜/g,''))}" aria-label="発音">▶</button></div>`).join('')}</div></div>`;}
+function drawCard(){
+  const l=L(),p=vPool(l),box=$('#cardBox');if(!box)return;
+  if(!p.length){box.innerHTML=`<div class="card empty"><h2>全語句を習得済み</h2><p class="muted">「すべて」に切り替えると復習できます。</p></div>`;return}
+  vIdx%=p.length;const x=p[vIdx];
+  const front=vMode==='en'?`<div><div class="big">${esc(x.w)}</div><div class="muted">${esc(x.pos)}・タップで裏返す</div></div>`:`<div><div class="big" style="font-family:var(--f-body)">${esc(x.ja)}</div><div class="muted">英語を思い出してタップ</div></div>`;
+  box.innerHTML=`<div class="flip" id="flip" role="button" tabindex="0" aria-label="カードを裏返す"><div class="flip-in"><div class="face">${front}</div>
+  <div class="face back"><div style="display:grid;gap:8px;align-content:start"><div class="vw-word" style="font-size:24px">${esc(x.w)}</div><div style="font-size:18px">${esc(x.ja)}</div>
+  <div class="row"><button class="btn sm" data-act="say" data-t="${esc(x.w.replace(/\b[AB]\b|~|〜/g,''))}">▶ 語</button><button class="btn sm" data-act="say" data-t="${esc(x.ex)}">▶ 例文</button></div><div class="ex">${esc(x.ex)}</div><div class="muted">${esc(x.exja)}</div>${x.note?`<div class="muted" style="font-size:13px">📎 ${esc(x.note)}${x.syn?' ／ ≒ '+esc(x.syn):''}</div>`:''}</div></div></div></div>
+  <div class="row" style="margin-top:10px"><span class="muted" style="font-family:var(--f-mono);font-size:12px">${vIdx+1} / ${p.length}</span><span class="sp"></span>
+  <button class="btn" data-act="rate" data-r="1">もう一度</button><button class="btn pri" data-act="rate" data-r="2">覚えた</button></div>`;}
+
+/* 文法・表現・知識 */
+function markIn(ex,key){return esc(ex)}
+const vGrammar=l=>`<div class="stack">${(l.grammar||[]).map((g,i)=>`<div class="card spot gitem"><span class="lbl">Grammar ${i+1}</span><h3>${esc(g.name)}</h3><div class="ex">${esc(g.ex)}</div><div>${esc(g.exp)}</div><div><button class="btn sm" data-act="askG" data-t="${esc(g.name)}">例文をもっと / 詳しく質問</button></div></div>`).join('')}</div>`;
+const vExpr=l=>`<div class="stack">${(l.expr||[]).map(e=>`<div class="card spot gitem"><h3 style="font-family:var(--f-disp);font-size:19px">${esc(e.p)}</h3><div>${esc(e.ja)}</div><div class="muted">${esc(e.use)}</div></div>`).join('')}</div>`;
+const vKnow=l=>`<div class="stack"><div class="card spot stack"><span class="lbl">要旨</span><div style="font-size:16px">${esc(l.know?.summary)}</div></div>${(l.know?.points||[]).map(p=>`<div class="card spot gitem"><h3>${esc(p.h)}</h3><div>${esc(p.b)}</div></div>`).join('')}</div>`;
+
+/* テスト */
+let qz=null;
+function makeQuiz(l){
+  const v=l.vocab||[];const items=[];
+  const sh=a=>a.map(x=>[Math.random(),x]).sort((a,b)=>a[0]-b[0]).map(x=>x[1]);
+  sh(v).slice(0,6).forEach(x=>{const ds=sh(v.filter(y=>y!==x)).slice(0,3).map(y=>y.ja);if(ds.length<3)return;const c=sh([x.ja,...ds]);items.push({q:`「${x.w}」の意味は？`,choices:c,a:c.indexOf(x.ja),exp:x.ex+' — '+x.exja})});
+  (l.quiz||[]).forEach(q=>items.push(q));
+  return {items:sh(items),i:0,score:0,picked:null};
+}
+function vTest(l){
+  if(!qz||qz.lid!==l.id){qz=makeQuiz(l);qz.lid=l.id}
+  const sents=l.paragraphs.flatMap(p=>p.sentences);
+  let quiz;
+  if(qz.i>=qz.items.length)quiz=`<div class="card empty stack"><span class="lbl">結果</span><div class="score">${qz.score} / ${qz.items.length}</div><div><button class="btn pri" data-act="qreset">もう一度（問題を入れ替え）</button></div></div>`;
+  else{const q=qz.items[qz.i];quiz=`<div class="card stack"><div class="row"><span class="lbl">選択問題 ${qz.i+1} / ${qz.items.length}</span><span class="sp"></span><span class="muted" style="font-family:var(--f-mono);font-size:12px">正解 ${qz.score}</span></div>
+   <h3 style="font-size:17px">${esc(q.q)}</h3><div>${q.choices.map((c,i)=>{let cl='';if(qz.picked!=null){if(i===q.a)cl='ok';else if(i===qz.picked)cl='ng'}return `<button class="choice ${cl}" data-act="pick" data-i="${i}" ${qz.picked!=null?'disabled':''}>${esc(c)}</button>`}).join('')}</div>
+   ${qz.picked!=null?`<div class="gloss">${esc(q.exp)}</div><div><button class="btn pri" data-act="qnext">次へ</button></div>`:''}</div>`}
+  const s=sents[(wt.idx)%sents.length];
+  return `<div class="stack">${quiz}
+  <div class="card stack"><div class="row"><span class="lbl">AI採点 記述問題</span><span class="sp"></span><div class="toggles"><button class="btn sm" data-act="wm" data-v="e2j" aria-pressed="${wt.mode==='e2j'}">英文和訳</button><button class="btn sm" data-act="wm" data-v="j2e" aria-pressed="${wt.mode==='j2e'}">和文英訳</button></div></div>
+  <div class="${wt.mode==='e2j'?'en':''}" style="${wt.mode==='e2j'?'font-size:17px':'font-size:16px'}">${esc(wt.mode==='e2j'?s.en:s.ja)}</div>
+  <textarea id="wtIn" rows="3" placeholder="${wt.mode==='e2j'?'日本語訳を入力':'英文を入力'}">${esc(wt.draft)}</textarea>
+  <div class="row"><button class="btn" data-act="wnext">別の文</button><span class="sp"></span><button class="gbtn" data-act="grade" ${!ai.ok()||wt.busy?'disabled':''}>${wt.busy?'<span class="loader"></span> 採点中':'AIに採点してもらう'}</button></div>
+  ${wt.res?`<div class="gloss"><div class="score" style="font-size:28px">${esc(wt.res.score)}<span style="font-size:14px" class="muted"> / 10</span></div><div><b>良い点</b>　${esc(wt.res.good)}</div><div><b>直すと良い点</b>　${esc(wt.res.fix)}</div><div><b>模範解答</b>　${esc(wt.res.model)}</div></div>`:''}
+  ${ai.ok()?'':NOAI}</div></div>`;}
+const wt={mode:'e2j',idx:0,draft:'',res:null,busy:false};
+
+/* AI質問 */
+let chatBusy=false;
+function vAsk(l){
+  const h=S.chat[l.id]||[];
+  return `<div class="card stack"><div class="row"><span class="lbl">この課について何でも質問</span><span class="sp"></span>${h.length?'<button class="btn sm" data-act="clearChat">履歴を消す</button>':''}</div>
+  <div class="chat" id="chat">${h.length?h.map(m=>`<div class="msg ${m.role==='user'?'u':'a'}">${esc(m.content)}</div>`).join(''):`<div class="muted">本文・単語・文法を踏まえて答えます。例：「第2段落の since はなぜ理由の意味？」</div>`}</div>
+  <div class="chips">${['この課の要旨を3行で','重要構文を難しい順に解説','定期テストに出そうな問題を5問','この課の単語で例文を作って'].map(t=>`<button class="chip" data-act="chip" data-t="${t}">${t}</button>`).join('')}</div>
+  <form id="askF" class="row" style="flex-wrap:nowrap"><textarea id="askIn" rows="2" placeholder="質問を入力" style="flex:1;min-width:0"></textarea><button class="gbtn" ${!ai.ok()||chatBusy?'disabled':''}>${chatBusy?'<span class="loader"></span>':'送信'}</button></form>
+  ${ai.ok()?'':NOAI}</div>`;}
+function ctx(l){return `【教科書本文】\n${l.raw}\n\n【重要語句】${(l.vocab||[]).map(v=>v.w+'='+v.ja).join(', ')}\n【文法事項】${(l.grammar||[]).map(g=>g.name).join(' / ')}`}
+async function ask(q){
+  const l=L();if(!ai.ok()||chatBusy||!q.trim())return;
+  const h=S.chat[l.id]=S.chat[l.id]||[];h.push({role:'user',content:q});chatBusy=true;
+  h.push({role:'assistant',content:'…'});render();
+  const sys=`あなたは高校3年生向け英語講師。以下の課について、日本語で、正確・具体的・簡潔に答える。構文はSVOC、品詞、修飾関係まで示す。Markdown記号は使わずプレーンテキストで。\n\n${ctx(l)}`;
+  const msgs=h.slice(0,-1).slice(-12);
+  try{h[h.length-1].content=await ai.chat(msgs,sys,({text})=>{h[h.length-1].content=text;const c=$('#chat');if(c){c.lastElementChild.textContent=text;c.scrollTop=c.scrollHeight}})}
+  catch(e){h[h.length-1].content=e?.code==='rate_limited'?'混み合っています。少し待ってから送ってください。':e?.code==='not_granted'?'AIの利用が許可されていません。':'回答を取得できませんでした: '+(e?.message||'')}
+  chatBusy=false;if(h.length>40)h.splice(0,h.length-40);save();render();}
+
+/* ===== AI教材化 ===== */
+const PARA_PROMPT=(p,i)=>`次は高校3年生上級英語教科書の第${i+1}段落です。この段落を「一切妥協せず」完全に教材化し、JSONのみを返してください。
+要件:
+- sentences: 段落の全文を1文ずつ分割。各 {en:原文そのまま, ja:自然な和訳, note:構文解説（SVOC・修飾関係・省略・挿入・時制など試験で問われる点を日本語で具体的に）}
+- vocab: 高校基礎レベル以上の単語・熟語を漏れなく。各 {w:見出し語（熟語は基本形）, pos:品詞（名/動/形/副/熟語 等）, ja:文脈での意味, ex:新しい英例文, exja:その和訳, note:派生語・語法・発音注意など, syn:類義語}
+- grammar: 段落中の文法・構文事項をすべて。各 {name:文法項目名, ex:本文中の該当箇所, exp:日本語の解説}
+- expr: 論説・会話で使える表現。各 {p:表現, ja:意味, use:使い方}
+本文:
+"""${p}"""`;
+const LESSON_PROMPT=raw=>`次は高校3年生上級英語教科書の1課の本文です。JSONのみを返してください:
+{"title_ja":"課の内容を表す日本語タイトル(15字以内)","summary":"要旨(80〜120字)","points":[{"h":"見出し","b":"内容理解・背景知識の解説"}]（5〜8個。段落構成、筆者の主張、背景知識、関連する時事・学術知識を含む）,"quiz":[{"q":"問題文","choices":["4つ"],"a":正解のindex,"exp":"解説"}]（8問。内容一致・文法・語法・語彙をバランスよく）}
+本文:
+"""${raw}"""`;
+let building=false;
+async function build(l){
+  if(!ai.ok()){toast('AI機能は claude.ai 上で開くか、設定でAPIキーを入れると使えます');return}
+  if(building)return;building=true;
+  const paras=l.raw.split(/\n\s*\n/).map(s=>s.trim()).filter(Boolean);
+  const m=$('#main');const prog=t=>{m.innerHTML=`<div class="card empty stack"><h2>教材化しています</h2><div class="prog"><span class="loader"></span> ${t}</div><p class="muted">段落ごとに和訳・構文・単語・文法を作成しています。1段落あたり数十秒かかります。</p></div>`};
+  try{
+    const out=[],vocab=[],grammar=[],expr=[],seen=new Set();
+    for(let i=0;i<paras.length;i++){
+      prog(`段落 ${i+1} / ${paras.length}`);
+      const r=await ai.json(PARA_PROMPT(paras[i],i));
+      out.push({sentences:r.sentences||[]});
+      (r.vocab||[]).forEach(v=>{const k=v.w?.toLowerCase();if(k&&!seen.has(k)){seen.add(k);vocab.push(v)}});
+      grammar.push(...(r.grammar||[]));expr.push(...(r.expr||[]));
+    }
+    prog('要旨・背景知識・テストを作成中');
+    const g=await ai.json(LESSON_PROMPT(l.raw));
+    Object.assign(l,{paragraphs:out,vocab,grammar,expr,know:{summary:g.summary,points:g.points||[]},quiz:(g.quiz||[]).filter(q=>q.choices?.length===4)});
+    if(g.title_ja&&/^Lesson|^L\d|^新しい/.test(l.title))l.title+=' '+g.title_ja;
+    l.st=l.st||{};save();toast('教材化が完了しました');
+  }catch(e){toast(e?.code==='rate_limited'?'混み合っています。少し待って再実行してください':'教材化に失敗しました。もう一度お試しください')}
+  building=false;render();}
+
+/* ===== 追加シート ===== */
+function openSheet(){
+  $('#sheetRoot').innerHTML=`<div class="sheet-bg" data-act="close"></div><form class="sheet" id="addF"><h2>本文を追加</h2>
+  <label class="stack" style="gap:4px"><span class="lbl">タイトル</span><input type="text" id="tIn" placeholder="例: Lesson 3 Part 1" required></label>
+  <div class="drop"><span class="lbl">写真から読み取る</span>
+   <div class="row"><label class="btn sm">カメラで撮る<input type="file" id="camIn" accept="image/*" capture="environment" hidden></label><label class="btn sm">写真を選ぶ（複数可）<input type="file" id="imgIn" accept="image/*" multiple hidden></label><span class="muted" style="font-size:12px">画像の貼り付けも可</span></div>
+   <div class="thumbs" id="thumbs"></div>
+   <div class="row"><button type="button" class="gbtn" data-act="ocr" id="ocrBtn" hidden>本文を読み取る</button><span class="prog" id="ocrP"></span></div></div>
+  <label class="stack" style="gap:4px"><span class="lbl">英文（段落は空行で区切る・読み取り結果は確認して修正）</span><textarea id="rIn" rows="10" placeholder="教科書の本文を貼り付け" required></textarea></label>
+  <p class="muted" style="margin:0;font-size:13px">1パートずつ追加すると精度が上がります。保存後、AIが和訳・構文・単語・文法・表現・知識・テストを作成します。</p>
+  <div class="row"><button type="button" class="btn" data-act="close">キャンセル</button><span class="sp"></span><button class="gbtn">保存して教材化</button></div></form>`;
+  imgs=[];$('#tIn').focus();}
+
+/* ===== 写真 → 本文（OCR） ===== */
+let imgs=[];
+function addImgs(files){[...files].filter(f=>f.type.startsWith('image/')).forEach(f=>imgs.push({f,u:URL.createObjectURL(f)}));drawThumbs()}
+function drawThumbs(){const t=$('#thumbs');if(!t)return;t.innerHTML=imgs.map((x,i)=>`<figure><img src="${x.u}" alt="ページ${i+1}"><button type="button" data-act="rmImg" data-i="${i}" aria-label="削除">×</button></figure>`).join('');$('#ocrBtn').hidden=!imgs.length}
+async function runOcr(){
+  if(!ai.ok()){toast('AI機能は claude.ai 上で開くか、設定でAPIキーを入れると使えます');return}
+  const b=$('#ocrBtn'),p=$('#ocrP'),ta=$('#rIn');b.disabled=true;
+  try{for(let i=0;i<imgs.length;i++){p.innerHTML=`<span class="loader"></span> ${i+1} / ${imgs.length} 枚目を読み取り中`;
+      const t=(await ai.ocr(await shrink(imgs[i].f))).trim();ta.value=(ta.value.trim()?ta.value.trim()+'\n\n':'')+t}
+    imgs=[];drawThumbs();p.textContent='読み取り完了。本文を確認してください';
+    if(!$('#tIn').value)$('#tIn').value='新しい課（写真）'}
+  catch(e){p.textContent=e?.code==='images_unavailable'?'この表示では画像を送れません。claude.ai 上で開き直してください':e?.code==='rate_limited'?'混み合っています。少し待って再実行してください':'読み取れませんでした。明るく正面から撮り直してください'}
+  b.disabled=false}
+document.addEventListener('paste',e=>{if(!$('#addF'))return;const fs=[...(e.clipboardData?.files||[])];if(fs.length){e.preventDefault();addImgs(fs)}});
+
+/* ===== 設定シート ===== */
+function fillVoices(){const s=$('#vSel');if(!s)return;const v=enVoices();
+  s.innerHTML=`<option value="">自動（最良の女性音声）${v[0]?' → '+esc(v[0].name):''}</option>`+v.map(x=>`<option value="${esc(x.name)}" ${x.name===CFG.voice?'selected':''}>${HQ.test(x.name)?'★ ':''}${esc(x.name)} (${esc(x.lang)})</option>`).join('')}
+try{speechSynthesis.onvoiceschanged=fillVoices}catch(e){}
+function openCfg(){const l=L();
+  $('#sheetRoot').innerHTML=`<div class="sheet-bg" data-act="close"></div><div class="sheet" role="dialog" aria-label="設定">
+  <div class="row"><h2>設定</h2><span class="sp"></span><button class="btn sm" data-act="close">閉じる</button></div>
+  <section class="stack" style="gap:8px"><span class="lbl">ナレーション</span>
+   <div class="muted" style="font-size:13px">優先順：収録済みの高品質音声ファイル（${AUD.size}件）→ OpenAI音声（Web版・キー設定時）→ 端末の最良の女性音声</div>
+   <label class="stack" style="gap:4px">端末の音声<select id="vSel"></select></label>
+   <label class="row">速さ<input type="range" id="rate" min="0.6" max="1.3" step="0.05" value="${CFG.rate}" style="flex:1;min-width:0"><span id="rateV" class="tag">${CFG.rate}×</span></label>
+   <div><button class="btn sm" data-act="say" data-t="Without the ability to discard details, the brain would be overwhelmed by trivial information.">▶ 試聴</button></div></section>
+  <section class="stack" style="gap:8px"><span class="lbl">この課の音声ファイル（教科書CD・デジタル教科書の音声など）</span>
+   <div class="row"><label class="btn sm">ファイルを入れる<input type="file" id="lapIn" accept="audio/*" hidden></label><button class="btn sm" data-act="lapDel">削除</button><span class="muted" id="lapName" style="font-size:13px"></span></div></section>
+  <section class="stack" style="gap:8px"><span class="lbl">Web版で使うキー（この端末にのみ保存）</span>
+   <label class="stack" style="gap:4px">Anthropic APIキー（AI解説・質問・写真読み取り）<input type="password" id="antKey" value="${esc(CFG.antKey)}" placeholder="sk-ant-..." autocomplete="off"></label>
+   <label class="stack" style="gap:4px">OpenAI APIキー（高品質ナレーション）<input type="password" id="oaKey" value="${esc(CFG.oaKey)}" placeholder="sk-..." autocomplete="off"></label>
+   <label class="row">声<select id="oaVoice" style="flex:1">${['nova','shimmer','coral','sage','alloy'].map(v=>`<option ${v===CFG.oaVoice?'selected':''}>${v}</option>`).join('')}</select></label>
+   <p class="muted" style="font-size:12px;margin:0">claude.ai 上ではAIを自動で使えるので、キーは不要です。</p></section>
+  <section class="stack" style="gap:8px"><span class="lbl">データ</span>
+   <div class="row"><button class="btn sm" data-act="exp">この課を書き出す</button><label class="btn sm">課を読み込む<input type="file" id="impIn" accept=".json,application/json" hidden></label><button class="btn sm" data-act="delLesson">この課を削除</button></div>
+   <p class="muted" style="font-size:12px;margin:0">書き出したJSONを GitHub の crown-lab/lessons/ に置くと、本文・単語・例文の高品質音声が自動で作られます。</p></section></div>`;
+  fillVoices();idb.get('lesson:'+l.id).then(f=>{const n=$('#lapName');if(f&&n)n.textContent=f.name||'保存済み'})}
+async function mountLap(l){const f=await idb.get('lesson:'+l.id);const box=$('#lap');if(!f||!box||L().id!==l.id)return;
+  box.innerHTML=`<div class="card row" style="padding:10px 14px"><span class="lbl">教科書音声</span><audio id="lapA" controls preload="metadata" src="${URL.createObjectURL(f)}" style="flex:1;min-width:0;height:36px"></audio></div>`;
+  $('#lapA').playbackRate=CFG.rate}
+async function exportLesson(l){const {st,...o}=l;const data=JSON.stringify(o,null,1),filename=(l.title||'lesson').replace(/[\\/:*?"<>|\s]+/g,'_')+'.json';
+  try{const d=await window.claude?.use?.('downloads');if(d){await d.save({filename,data});return}}catch(e){if(e?.code)return}
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([data],{type:'application/json'}));a.download=filename;a.click()}
+
+/* ===== イベント ===== */
+document.addEventListener('click',e=>{
+  const t=e.target.closest('[data-act],[data-tab],.sent,.vw,#flip');if(!t)return;
+  const l=L(),a=t.dataset.act;
+  if(t.matches('.vw')){e.stopPropagation();const v=l.vocab.find(x=>x.w===t.dataset.w);if(v)toast(`${v.w}：${v.ja}`);return}
+  if(t.dataset.tab){S.tab=t.dataset.tab;save();render();scrollTo({top:0,behavior:'smooth'});return}
+  if(t.matches('.sent')){openS=openS===t.dataset.s?null:t.dataset.s;render();return}
+  if(t.id==='flip'){t.classList.toggle('flipped');return}
+  switch(a){
+    case 'toggleJa':showJa=!showJa;render();break;
+    case 'say':speak(t.dataset.t);break;
+    case 'speakAll':readAll(l);break;
+    case 'stopNP':stopAudio();break;
+    case 'cfg':openCfg();break;
+    case 'ocr':runOcr();break;
+    case 'rmImg':imgs.splice(+t.dataset.i,1);drawThumbs();break;
+    case 'lapDel':idb.del('lesson:'+l.id).then(()=>{$('#lapName').textContent='';toast('音声ファイルを削除しました')});break;
+    case 'exp':exportLesson(l);break;
+    case 'delLesson':
+      if(S.lessons.length<2){toast('最後の課は削除できません');break}
+      if(!t.dataset.armed){t.dataset.armed=1;t.textContent='もう一度押すと削除';break}
+      S.lessons=S.lessons.filter(x=>x.id!==l.id);S.cur=S.lessons[0].id;idb.del('lesson:'+l.id);save();$('#sheetRoot').innerHTML='';render();toast('削除しました');break;
+    case 'askS':S.tab='ask';render();ask(`次の文の構文と和訳のポイントを詳しく解説して:\n${t.dataset.t}`);break;
+    case 'askG':S.tab='ask';render();ask(`「${t.dataset.t}」を詳しく解説し、入試レベルの例文を3つ（和訳付き）挙げて`);break;
+    case 'vf':vFilter=t.dataset.v;vIdx=0;render();break;
+    case 'vm':vMode=t.dataset.v;render();break;
+    case 'rate':{const p=vPool(l),x=p[vIdx%p.length];l.st=l.st||{};l.st[x.w]=+t.dataset.r;save();if(t.dataset.r==='1'||vFilter==='all')vIdx++;render();break}
+    case 'pick':{const q=qz.items[qz.i];qz.picked=+t.dataset.i;if(qz.picked===q.a)qz.score++;render();break}
+    case 'qnext':qz.i++;qz.picked=null;render();break;
+    case 'qreset':qz=null;render();break;
+    case 'wm':wt.mode=t.dataset.v;wt.res=null;wt.draft='';render();break;
+    case 'wnext':wt.idx+=1+Math.floor(Math.random()*3);wt.res=null;wt.draft='';render();break;
+    case 'grade':grade(l);break;
+    case 'chip':ask(t.dataset.t);break;
+    case 'clearChat':S.chat[l.id]=[];save();render();break;
+    case 'build':build(l);break;
+    case 'close':$('#sheetRoot').innerHTML='';break;
+  }
+});
+document.addEventListener('keydown',e=>{if(e.target.id==='flip'&&(e.key==='Enter'||e.key===' ')){e.preventDefault();e.target.classList.toggle('flipped')}if(e.key==='Escape')$('#sheetRoot').innerHTML=''});
+document.addEventListener('input',e=>{const t=e.target;
+  if(t.id==='wtIn')wt.draft=t.value;
+  if(t.id==='rate'){CFG.rate=+t.value;$('#rateV').textContent=CFG.rate+'×';saveCfg()}
+  if(t.id==='antKey'||t.id==='oaKey'){CFG[t.id]=t.value.trim();saveCfg()}});
+document.addEventListener('change',async e=>{const t=e.target,l=L();
+  if(t.id==='vSel'||t.id==='oaVoice'){CFG[t.id==='vSel'?'voice':'oaVoice']=t.value;saveCfg()}
+  if(t.id==='antKey')render();
+  if(t.id==='camIn'||t.id==='imgIn'){addImgs(t.files);t.value=''}
+  if(t.id==='lapIn'&&t.files[0]){await idb.set('lesson:'+l.id,t.files[0]);$('#lapName').textContent=t.files[0].name;toast('音声ファイルを保存しました');if(S.tab==='read')mountLap(l)}
+  if(t.id==='impIn'&&t.files[0]){try{const o=JSON.parse(await t.files[0].text());if(!o.raw)throw 0;o.id=uid();o.st={};S.lessons.push(o);S.cur=o.id;save();$('#sheetRoot').innerHTML='';render();toast('読み込みました')}catch(_){toast('この課のJSONではありません')}}});
+document.addEventListener('submit',e=>{
+  e.preventDefault();
+  if(e.target.id==='askF'){const v=$('#askIn').value;ask(v)}
+  if(e.target.id==='addF'){const l={id:uid(),title:$('#tIn').value.trim(),raw:$('#rIn').value.trim().replace(/\r/g,''),st:{}};S.lessons.push(l);S.cur=l.id;S.tab='read';save();$('#sheetRoot').innerHTML='';render();build(l)}
+});
+$('#lessonSel').addEventListener('change',e=>{stopAudio();S.cur=e.target.value;openS=null;qz=null;vIdx=0;wt.idx=0;wt.res=null;save();render()});
+$('#addBtn').addEventListener('click',openSheet);
+document.addEventListener('pointermove',e=>{const c=e.target.closest?.('.spot');if(!c)return;const r=c.getBoundingClientRect();c.style.setProperty('--mx',e.clientX-r.left+'px');c.style.setProperty('--my',e.clientY-r.top+'px')});
+
+async function grade(l){
+  if(!ai.ok()||wt.busy)return;const s=l.paragraphs.flatMap(p=>p.sentences)[wt.idx%l.paragraphs.flatMap(p=>p.sentences).length];
+  if(!wt.draft.trim()){toast('解答を入力してください');return}
+  wt.busy=true;render();
+  const task=wt.mode==='e2j'?`英文和訳の採点。原文: ${s.en}\n参考訳: ${s.ja}\n生徒の訳: ${wt.draft}`:`和文英訳の採点。和文: ${s.ja}\n本文の英文: ${s.en}\n生徒の英文: ${wt.draft}`;
+  try{wt.res=await AI.json(`高校3年生の答案を大学入試基準で採点。${task}\nJSONのみ: {"score":0-10の整数,"good":"良い点","fix":"誤り・改善点を具体的に（文法・語法・訳語）","model":"模範解答"}`,'default')}
+  catch(e){toast('採点できませんでした')}
+  wt.busy=false;render();}
+
+render();
+
+/* ===== オーロラ背景（WebGL） ===== */
+(()=>{const c=$('#bg');const gl=c.getContext('webgl');if(!gl)return;
+const vs=`attribute vec2 p;void main(){gl_Position=vec4(p,0.,1.);}`;
+const fs=`precision mediump float;uniform vec2 r;uniform float t;
+float h(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
+float n(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(h(i),h(i+vec2(1,0)),f.x),mix(h(i+vec2(0,1)),h(i+1.),f.x),f.y);}
+float fbm(vec2 p){float v=0.,a=.5;for(int i=0;i<5;i++){v+=a*n(p);p*=2.02;a*=.5;}return v;}
+void main(){vec2 uv=gl_FragCoord.xy/r;vec2 q=uv;q.x*=r.x/r.y;
+vec3 col=vec3(.027,.043,.078);
+for(int i=0;i<3;i++){float fi=float(i);
+ float y=.72-fi*.1+.18*(fbm(vec2(q.x*.9+fi*3.,t*.06+fi))-.5);
+ float d=uv.y-y;float band=exp(-abs(d)*(d>0.?5.:14.))*.9;
+ float streak=.55+.45*fbm(vec2(q.x*6.+t*.12,uv.y*2.));
+ vec3 c=fi==0.?vec3(.22,.88,.69):fi==1.?vec3(.49,.77,1.):vec3(1.,.72,.42);
+ col+=c*band*streak*(.55-fi*.12);}
+col*=smoothstep(0.,.5,uv.y)*.9+.1;
+gl_FragColor=vec4(col,1.);}`;
+const sh=(t,s)=>{const o=gl.createShader(t);gl.shaderSource(o,s);gl.compileShader(o);return o};
+const pr=gl.createProgram();gl.attachShader(pr,sh(gl.VERTEX_SHADER,vs));gl.attachShader(pr,sh(gl.FRAGMENT_SHADER,fs));gl.linkProgram(pr);
+if(!gl.getProgramParameter(pr,gl.LINK_STATUS))return;gl.useProgram(pr);
+const b=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,b);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,1,-1,-1,1,1,1]),gl.STATIC_DRAW);
+const lp=gl.getAttribLocation(pr,'p');gl.enableVertexAttribArray(lp);gl.vertexAttribPointer(lp,2,gl.FLOAT,false,0,0);
+const ur=gl.getUniformLocation(pr,'r'),ut=gl.getUniformLocation(pr,'t');
+const fit=()=>{const s=.5;c.width=innerWidth*s;c.height=innerHeight*s;gl.viewport(0,0,c.width,c.height)};fit();addEventListener('resize',fit);
+const still=matchMedia('(prefers-reduced-motion: reduce)').matches;let last=0;
+const f=ts=>{if(!document.hidden&&ts-last>33){last=ts;gl.uniform2f(ur,c.width,c.height);gl.uniform1f(ut,ts/1000);gl.drawArrays(gl.TRIANGLE_STRIP,0,4)}if(!still)requestAnimationFrame(f)};requestAnimationFrame(f);})();
+</script>
+</body></html>
